@@ -10,6 +10,8 @@ The Repository Maintainability Index tool analyzes GitHub repositories and provi
 
 - **Comprehensive Metrics**: Evaluates 6 key aspects of repository maintainability
 - **Weighted Scoring**: Each metric has an appropriate weight reflecting its importance
+- **🤖 AI-Powered Analysis**: Optional LLM integration for deep insights into README quality, commit patterns, and community health
+- **Smart Recommendations**: AI-generated actionable recommendations with impact and confidence scores
 - **Multiple Output Formats**: Supports both human-readable text and JSON formats
 - **GitHub API Integration**: Fetches real-time data from GitHub
 - **Production-Ready**: 90%+ test coverage with best practices
@@ -56,6 +58,27 @@ To avoid rate limiting, use a GitHub personal access token:
 
 ```bash
 java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --token YOUR_GITHUB_TOKEN
+```
+
+### With AI Analysis (LLM)
+
+Enable AI-powered deep analysis with LLM integration:
+
+```bash
+export OPENROUTER_API_KEY=your_api_key_here
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm
+```
+
+This provides:
+- 📖 **README Analysis**: Clarity, completeness, and newcomer-friendliness scores
+- 📝 **Commit Quality**: Analysis of commit message patterns and consistency
+- 👥 **Community Health**: Responsiveness, helpfulness, and tone evaluation
+- 💡 **AI Recommendations**: Prioritized suggestions with impact and confidence scores
+
+You can specify a custom model:
+
+```bash
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm --model openai/gpt-4
 ```
 
 ### JSON Output

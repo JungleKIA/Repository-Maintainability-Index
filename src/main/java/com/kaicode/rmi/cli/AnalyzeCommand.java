@@ -24,6 +24,12 @@ public class AnalyzeCommand implements Callable<Integer> {
     @Option(names = {"-f", "--format"}, description = "Output format: text or json (default: text)")
     private String format = "text";
 
+    @Option(names = {"-l", "--llm"}, description = "Enable LLM analysis (requires API key in OPENROUTER_API_KEY env var)")
+    private boolean enableLLM = false;
+
+    @Option(names = {"-m", "--model"}, description = "LLM model to use (default: openai/gpt-3.5-turbo)")
+    private String llmModel = "openai/gpt-3.5-turbo";
+
     @Override
     public Integer call() {
         try {
@@ -44,17 +50,39 @@ public class AnalyzeCommand implements Callable<Integer> {
 
             MaintainabilityReport report = service.analyze(owner, repo);
 
-            ReportFormatter formatter = new ReportFormatter();
-            ReportFormatter.OutputFormat outputFormat = format.equalsIgnoreCase("json")
-                    ? ReportFormatter.OutputFormat.JSON
-                    : ReportFormatter.OutputFormat.TEXT;
+            if (enableLLM) {
+                String apiKey = System.getenv("OPENROUTER_API_KEY");
+                if (apiKey == null || apiKey.isEmpty()) {
+                    System.err.println("Warning: OPENROUTER_API_KEY not set, LLM analysis disabled");
+                    enableLLM = false;
+                }
+            }
 
-            String output = formatter.format(report, outputFormat);
-            System.out.println(output);
+            if (enableLLM && format.equalsIgnoreCase("text")) {
+                String apiKey = System.getenv("OPENROUTER_API_KEY");
+                com.kaicode.rmi.llm.LLMClient llmClient = new com.kaicode.rmi.llm.LLMClient(apiKey, llmModel);
+                com.kaicode.rmi.llm.LLMAnalyzer llmAnalyzer = new com.kaicode.rmi.llm.LLMAnalyzer(llmClient);
+                
+                System.out.println("Running LLM analysis...\n");
+                com.kaicode.rmi.model.LLMAnalysis llmAnalysis = llmAnalyzer.analyze(client, owner, repo);
+                
+                com.kaicode.rmi.util.LLMReportFormatter llmFormatter = new com.kaicode.rmi.util.LLMReportFormatter();
+                String output = llmFormatter.formatWithLLM(report, llmAnalysis);
+                System.out.println(output);
+            } else {
+                ReportFormatter formatter = new ReportFormatter();
+                ReportFormatter.OutputFormat outputFormat = format.equalsIgnoreCase("json")
+                        ? ReportFormatter.OutputFormat.JSON
+                        : ReportFormatter.OutputFormat.TEXT;
+
+                String output = formatter.format(report, outputFormat);
+                System.out.println(output);
+            }
 
             return 0;
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
             return 1;
         }
     }
