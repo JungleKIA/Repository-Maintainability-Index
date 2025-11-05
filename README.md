@@ -65,6 +65,8 @@ java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --token
 Enable AI-powered deep analysis with LLM integration:
 
 ```bash
+# IMPORTANT: Never commit your API key to git!
+# See SECURITY_BEST_PRACTICES.md for details
 export OPENROUTER_API_KEY=your_api_key_here
 java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm
 ```
@@ -74,6 +76,8 @@ This provides:
 - 📝 **Commit Quality**: Analysis of commit message patterns and consistency
 - 👥 **Community Health**: Responsiveness, helpfulness, and tone evaluation
 - 💡 **AI Recommendations**: Prioritized suggestions with impact and confidence scores
+
+⚠️ **Security Note**: OpenRouter automatically disables API keys exposed in public repositories. Always use environment variables. See [SECURITY_BEST_PRACTICES.md](SECURITY_BEST_PRACTICES.md) for proper usage.
 
 You can specify a custom model:
 
