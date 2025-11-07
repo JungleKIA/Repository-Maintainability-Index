@@ -4,7 +4,7 @@
 
 ## API Key Tested
 ```
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=sk-or-v1-[REDACTED FOR SECURITY]
 ```
 
 ## Test Result: ✅ SUCCESS (Graceful Fallback)
@@ -144,6 +144,10 @@ The project is **production-ready** as demonstrated by:
 2. **Or purchase credits** for full capabilities
 
 3. **Or use without LLM** - core functionality is excellent
+
+### Note on Example
+The example command above shows the key format but uses placeholder.
+Replace with your actual key after rotating it on OpenRouter.
 
 ---
 

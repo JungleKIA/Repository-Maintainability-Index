@@ -7,7 +7,7 @@
 ```
 Key 1: ❌ 401 - User not found
 Key 2: ❌ 402 - Insufficient credits  
-Key 3: ❌ 402 - Insufficient credits (sk-or-v1-fb4afe05...)
+Key 3: ❌ 402 - Insufficient credits (key redacted for security)
 ```
 
 ## Why Free Models Don't Work

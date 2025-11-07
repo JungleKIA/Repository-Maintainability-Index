@@ -59,7 +59,7 @@ Tests run: 216, Failures: 0, Errors: 0, Skipped: 0
 
 ### Provided Key Status
 ```
-API Key: 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
+API Key: sk-or-v1-[REDACTED FOR SECURITY]
 Status: Valid but requires credits
 Error: 402 - Insufficient credits
 ```

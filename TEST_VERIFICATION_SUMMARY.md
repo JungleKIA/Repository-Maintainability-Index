@@ -6,7 +6,7 @@
 
 ### 🔑 Provided API Key
 ```
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=sk-or-v1-[REDACTED FOR SECURITY]
 ```
 
 ### 📊 Test Status: ✅ SUCCESSFUL (with limitations)

@@ -62,7 +62,7 @@ Reason: No credits on account
 
 ### Key 3: Latest Provided Key
 ```
-Key: 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
+Key: sk-or-v1-[REDACTED FOR SECURITY]
 Status: ❌ 402 - Insufficient credits
 Reason: Account never purchased credits
 ```
