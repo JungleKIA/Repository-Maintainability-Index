@@ -3,7 +3,14 @@
 # Test script to verify OpenRouter API key functionality
 # Tests the provided key with a simple LLM request
 
-API_KEY="${1:-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}"
+API_KEY="${1:-$OPENROUTER_API_KEY}"
+
+if [ -z "$API_KEY" ]; then
+  echo "Error: No API key provided"
+  echo "Usage: $0 <api-key>"
+  echo "Or set OPENROUTER_API_KEY environment variable"
+  exit 1
+fi
 
 echo "==================================="
 echo "OpenRouter API Key Test"
