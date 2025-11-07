@@ -27,8 +27,8 @@ public class AnalyzeCommand implements Callable<Integer> {
     @Option(names = {"-l", "--llm"}, description = "Enable LLM analysis (requires API key in OPENROUTER_API_KEY env var)")
     private boolean enableLLM = false;
 
-    @Option(names = {"-m", "--model"}, description = "LLM model to use (default: openai/gpt-3.5-turbo)")
-    private String llmModel = "openai/gpt-3.5-turbo";
+    @Option(names = {"-m", "--model"}, description = "LLM model to use (default: openai/gpt-oss-20b:free)")
+    private String llmModel = "openai/gpt-oss-20b:free";
 
     @Override
     public Integer call() {

@@ -4,26 +4,20 @@
 
 ### Test Result
 ✅ **API Key is VALID** - Authentication successful  
-❌ **Credits Required** - Account needs $5 minimum purchase
+✅ **Works with FREE model** - No credits required!
 
-### Error Message
+### Model Used
 ```
-402 - Insufficient credits
-This account never purchased credits
+openai/gpt-oss-20b:free
 ```
 
 ## What This Means
 
-The API key works correctly for authentication, but the OpenRouter account needs credits to be purchased before LLM analysis can run.
+The API key works perfectly with the free model. No credit purchase necessary!
 
 ## Next Steps
 
-1. **Purchase Credits**
-   - URL: https://openrouter.ai/settings/credits
-   - Minimum: $5
-   - Time: 2-3 minutes
-
-2. **Test Again**
+1. **Test the Key**
    ```bash
    export OPENROUTER_API_KEY=your-key-here
    ./test_llm_key.sh
@@ -37,15 +31,11 @@ The API key works correctly for authentication, but the OpenRouter account needs
 
 ## Application Behavior
 
-**Current (No Credits):**
+**With Free Model:**
 - Deterministic analysis: ✅ Works perfectly
-- LLM analysis: ⚠️ Graceful fallback to defaults
-- No crashes, professional output
-
-**After Credit Purchase:**
-- Deterministic analysis: ✅ Works perfectly  
-- LLM analysis: ✅ Real AI insights
+- LLM analysis: ✅ Real AI insights (FREE!)
 - Repository-specific recommendations
+- No costs, no credit card needed
 
 ## Security Note
 
@@ -59,4 +49,6 @@ Always use:
 ---
 
 **Last Test:** 2025-01-XX  
-**Result:** Valid key, needs credits
+**Result:** ✅ Valid key, works with free model!  
+**Model:** openai/gpt-oss-20b:free  
+**Cost:** $0.00

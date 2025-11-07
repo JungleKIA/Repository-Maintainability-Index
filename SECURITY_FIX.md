@@ -38,8 +38,9 @@ api_keys.txt
 
 The latest API key was tested (without saving it):
 - ✅ Authentication: SUCCESS
-- ❌ Credits: Required ($5 minimum)
-- ✅ Application: Works with fallback mode
+- ✅ Free Model: WORKS (openai/gpt-oss-20b:free)
+- ✅ Application: Fully functional with LLM
+- 💰 Cost: $0.00
 
 ## Usage
 

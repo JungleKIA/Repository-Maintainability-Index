@@ -30,8 +30,9 @@
 ## Test Results
 
 ✅ **API Key Tested:** Valid authentication  
-❌ **Credits:** Required ($5 minimum at https://openrouter.ai/settings/credits)  
+✅ **Free Model:** Works perfectly (openai/gpt-oss-20b:free)  
 ✅ **No Keys in Repo:** Verified clean
+💰 **Cost:** $0.00 - No credits needed!
 
 ## How to Use
 

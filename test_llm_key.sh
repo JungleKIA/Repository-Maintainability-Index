@@ -26,7 +26,7 @@ RESPONSE=$(curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
   -H "HTTP-Referer: https://github.com/kaicode/rmi" \
   -H "X-Title: Repository Maintainability Index" \
   -d '{
-    "model": "openai/gpt-3.5-turbo",
+    "model": "openai/gpt-oss-20b:free",
     "messages": [
       {
         "role": "user",
