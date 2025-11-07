@@ -47,3 +47,12 @@ Thumbs.db
 *.bak
 *.swp
 *~
+
+# Environment and secrets
+.env
+.env.local
+*.key
+*.pem
+*_key.txt
+secrets.txt
+api_keys.txt
