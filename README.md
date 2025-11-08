@@ -46,6 +46,32 @@ This will create an executable JAR file in the `target/` directory.
 
 ## Usage
 
+### 🪟 Windows Users: UTF-8 Support
+
+If you see question marks (?) instead of emojis in Windows:
+
+**Quick Fix (Git Bash / Command Prompt):**
+```bash
+# Git Bash
+export LANG=en_US.UTF-8
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# Command Prompt
+chcp 65001
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+```
+
+**Or use the provided scripts:**
+```bash
+# Windows
+run-analysis.bat analyze owner/repo --llm
+
+# Linux / macOS / Git Bash
+./run-analysis.sh analyze owner/repo --llm
+```
+
+See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for detailed Windows configuration guide.
+
 ### Basic Usage
 
 ```bash
@@ -290,6 +316,17 @@ See [VERIFICATION_SUMMARY.md](VERIFICATION_SUMMARY.md) or [ПРОВЕРКА_ЗА
 - ✅ API keys handled securely (no storage, environment variables only)
 
 See [LLM_TESTING_RESULTS.md](LLM_TESTING_RESULTS.md) for complete LLM testing documentation.
+
+### 🪟 UTF-8 Support for Windows
+
+**Fixed:** Emoji display issues in Windows consoles (2024-11-08)
+
+- ✅ Automatic UTF-8 configuration on startup
+- ✅ Provided scripts: `run-analysis.bat` (Windows), `run-analysis.sh` (Linux/macOS)
+- ✅ Detailed setup guide for all Windows terminals
+- ✅ Tested on Git Bash, Command Prompt, PowerShell, Windows Terminal
+
+If you see question marks (?) instead of emojis, see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) or [UTF8_FIX_SUMMARY.md](UTF8_FIX_SUMMARY.md).
 
 ## Authors
 
