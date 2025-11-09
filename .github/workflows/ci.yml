@@ -24,11 +24,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Build and run tests
-        run: mvn clean test -B
-      
-      - name: Check coverage thresholds
-        run: mvn jacoco:check -B
+      - name: Build and verify
+        run: mvn clean verify -B
       
       - name: Archive test results
         if: always()
