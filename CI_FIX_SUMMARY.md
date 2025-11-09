@@ -77,6 +77,23 @@ Comprehensive documentation (in Russian) explaining:
 - CI/CD best practices
 - Troubleshooting guide
 
+## Additional Fixes Applied
+
+### Issue: Jobs failing after 2 seconds
+**Root Cause**: The workflow was running separate Maven commands which could cause issues with plugin lifecycle.
+
+**Fix Applied**:
+1. **Build and Test job**: Combined `mvn clean compile` and `mvn test` into a single `mvn clean test -B` command
+   - This ensures proper Maven lifecycle execution
+   - JaCoCo coverage is generated automatically during test phase
+
+2. **SBOM Generation job**: Added explicit compile step before SBOM generation
+   - Added `mvn clean compile -B` before `mvn cyclonedx:makeBom -B`
+   - Changed artifact path from `target/bom.json` to `target/bom.*` to catch all SBOM formats
+   - Added `if: always()` to upload artifacts even if job fails (for debugging)
+
+3. **Fixed CycloneDX goal**: Changed from `makeAggregateBom` to `makeBom` to match CI command
+
 ## Expected Results
 
 After these changes, all CI checks should pass:
