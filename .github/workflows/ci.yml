@@ -22,33 +22,26 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
+          cache: 'maven'
       
-      - name: Build with Maven
-        run: mvn clean compile -B
-      
-      - name: Run unit tests
-        run: mvn test -B
-      
-      - name: Generate coverage report
-        run: mvn jacoco:report -B
-      
-      - name: Check coverage thresholds
-        run: mvn jacoco:check -B
+      - name: Build and verify
+        run: mvn clean verify -B
       
       - name: Archive test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: target/surefire-reports/
+          retention-days: 30
       
       - name: Archive coverage report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: target/site/jacoco/
+          retention-days: 30
 
   security-scan:
     name: Security Scanning
@@ -63,7 +56,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
+          cache: 'maven'
       
       - name: Compile project
         run: mvn compile -B
@@ -92,7 +85,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
+          cache: 'maven'
       
       - name: Compile project
         run: mvn compile -B
@@ -118,16 +111,21 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
+          cache: 'maven'
+      
+      - name: Compile project
+        run: mvn clean compile -B
       
       - name: Generate CycloneDX SBOM
         run: mvn cyclonedx:makeBom -B
       
       - name: Upload SBOM
-        uses: actions/upload-artifact@v3
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: sbom
-          path: target/bom.json
+          path: target/bom.*
+          retention-days: 90
 
   package:
     name: Package Application
@@ -144,13 +142,14 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
+          cache: 'maven'
       
       - name: Package application
         run: mvn package -DskipTests -B
       
       - name: Upload JAR artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: application-jar
           path: target/repo-maintainability-index-*.jar
+          retention-days: 90
