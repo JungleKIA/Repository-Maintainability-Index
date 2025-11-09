@@ -1,0 +1,64 @@
+=================================================================
+   CI FIXES FOR PR #4 - COMPLETE SOLUTION
+=================================================================
+
+PROBLEM:
+--------
+PR #4 (enterprise-modernization-strategy) has 4 failing CI checks:
+❌ Build and Test (pull_request)
+❌ Build and Test (push)
+❌ Generate SBOM (pull_request)
+❌ Generate SBOM (push)
+
+SOLUTION:
+---------
+Created comprehensive fixes based on successful PR #5:
+
+FILES CREATED/MODIFIED:
+-----------------------
+1. .github/workflows/ci.yml (NEW, 156 lines)
+   - Fixed Build and Test: Single 'mvn clean verify' command
+   - Fixed SBOM: Added compile step + correct paths
+   - Updated all artifact uploads to v4
+   - Added retention policies
+
+2. pom.xml (MODIFIED)
+   - Added CycloneDX Maven plugin (v2.7.11)
+   - Configured SBOM generation in multiple formats
+
+3. Documentation (3 NEW files):
+   - PR4_CI_FIXES_SUMMARY.md - Executive summary
+   - CI_FIXES_PR4.md - Detailed technical docs
+   - HOW_TO_APPLY_FIXES_TO_PR4.md - Application guide
+
+KEY FIXES:
+----------
+✅ Unified build: mvn verify instead of split commands
+✅ SBOM plugin: Added to pom.xml with full config
+✅ Compile step: Added before SBOM generation
+✅ Artifact paths: Fixed from bom.json to bom.*
+✅ Action versions: Upgraded to upload-artifact@v4
+✅ Retention policies: Added for all artifacts
+✅ Cache syntax: Fixed 'maven' quoting
+
+EXPECTED RESULT:
+----------------
+After applying these fixes to PR #4:
+✅ All 4 failing checks will PASS
+✅ SBOM will be generated successfully
+✅ Artifacts will be uploaded with proper retention
+✅ CI pipeline will be stable and reliable
+
+TO APPLY:
+---------
+1. Cherry-pick this branch to PR #4
+   OR
+2. Manually copy files (see HOW_TO_APPLY_FIXES_TO_PR4.md)
+
+FILES TO REVIEW:
+----------------
+START HERE → PR4_CI_FIXES_SUMMARY.md
+Technical  → CI_FIXES_PR4.md
+How-to     → HOW_TO_APPLY_FIXES_TO_PR4.md
+
+=================================================================
