@@ -47,7 +47,7 @@ Key improvements:
         <execution>
             <phase>package</phase>
             <goals>
-                <goal>makeAggregateBom</goal>
+                <goal>makeBom</goal>
             </goals>
         </execution>
     </executions>
