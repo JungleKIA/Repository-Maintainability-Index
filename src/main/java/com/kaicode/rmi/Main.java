@@ -1,6 +1,7 @@
 package com.kaicode.rmi;
 
 import com.kaicode.rmi.cli.AnalyzeCommand;
+import com.kaicode.rmi.util.EncodingHelper;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -13,6 +14,9 @@ import picocli.CommandLine;
 public class Main implements Runnable {
 
     public static void main(String[] args) {
+        // Configure UTF-8 encoding for console output (especially important for Windows)
+        EncodingHelper.configureConsoleEncoding();
+        
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
     }

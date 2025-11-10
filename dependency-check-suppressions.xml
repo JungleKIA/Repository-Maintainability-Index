@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- 
+        This file contains suppressions for known false positives in dependency-check.
+        Add suppressions here for CVEs that don't actually affect this project.
+        
+        Example suppression:
+        <suppress>
+           <notes>This CVE doesn't affect our usage</notes>
+           <cve>CVE-2023-XXXXX</cve>
+        </suppress>
+    -->
+</suppressions>
