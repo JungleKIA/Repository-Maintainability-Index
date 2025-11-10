@@ -17,13 +17,10 @@ Welcome to the Repository Maintainability Index documentation.
 - [Modernization Roadmap](MODERNIZATION_ROADMAP.md) - Current and future work
 
 ### For Decision Makers
-- [Enterprise Assessment](../ENTERPRISE_ASSESSMENT.md) - **EXECUTIVE SUMMARY** - ROI analysis of enterprise patterns
+- [Implementation Notes](IMPLEMENTATION_NOTES.md) - Overview of the implementation strategy
+- [Testing Documentation](TESTING_VERIFICATION.md) - Comprehensive testing results
 
 ## 🎯 Quick Start
-
-### "Should we do full enterprise modernization?"
-**Read:** [Enterprise Assessment](../ENTERPRISE_ASSESSMENT.md)  
-**TL;DR:** No, but we've implemented a pragmatic adapted strategy.
 
 ### "How is this project architected?"
 **Read:** [C4 Architecture](architecture/C4_ARCHITECTURE.md)  
@@ -46,11 +43,11 @@ Welcome to the Repository Maintainability Index documentation.
 
 | Document | Purpose | Audience | Priority |
 |----------|---------|----------|----------|
-| [Enterprise Assessment](../ENTERPRISE_ASSESSMENT.md) | ROI analysis, should we do full enterprise modernization? | Decision Makers | 🔴 Must Read |
 | [Implementation Notes](IMPLEMENTATION_NOTES.md) | What we did and why | All | 🔴 Must Read |
 | [C4 Architecture](architecture/C4_ARCHITECTURE.md) | System design and structure | Developers | 🟡 Important |
 | [ADR Index](architecture/adr/README.md) | Design decisions with rationale | Developers | 🟡 Important |
 | [Modernization Roadmap](MODERNIZATION_ROADMAP.md) | Current status and future work | All | 🟢 Reference |
+| [Testing Documentation](TESTING_VERIFICATION.md) | Test results and coverage | QA / Developers | 🟢 Reference |
 
 ## 🏗️ Architecture at a Glance
 
@@ -120,9 +117,9 @@ Welcome to the Repository Maintainability Index documentation.
 5. Run tests: `mvn test`
 
 ### As a Decision Maker
-1. Read [Enterprise Assessment](../ENTERPRISE_ASSESSMENT.md) - ROI analysis
-2. Review [Implementation Notes](IMPLEMENTATION_NOTES.md) - What's been done
-3. Check [Modernization Roadmap](MODERNIZATION_ROADMAP.md) - Future work
+1. Review [Implementation Notes](IMPLEMENTATION_NOTES.md) - What's been done
+2. Check [Testing Documentation](TESTING_VERIFICATION.md) - Quality metrics
+3. Review [Modernization Roadmap](MODERNIZATION_ROADMAP.md) - Future work
 4. Make informed decision based on context
 
 ## 📝 Creating New Documentation
@@ -163,7 +160,7 @@ When making significant changes:
 
 - **Architecture questions:** Review ADRs and C4 diagrams
 - **Implementation questions:** Check Implementation Notes
-- **"Why not X?" questions:** Check Enterprise Assessment
+- **Testing questions:** Check Testing Documentation
 - **Future work questions:** Check Modernization Roadmap
 
 ---

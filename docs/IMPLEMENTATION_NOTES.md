@@ -231,10 +231,10 @@ We've implemented **high-value improvements** without **over-engineering**:
 
 ## Quick Reference
 
-- **Full Assessment:** [ENTERPRISE_ASSESSMENT.md](../ENTERPRISE_ASSESSMENT.md)
 - **Architecture:** [C4_ARCHITECTURE.md](architecture/C4_ARCHITECTURE.md)
 - **Decisions:** [ADR Index](architecture/adr/README.md)
 - **Roadmap:** [MODERNIZATION_ROADMAP.md](MODERNIZATION_ROADMAP.md)
+- **Testing:** [TESTING_VERIFICATION.md](TESTING_VERIFICATION.md)
 - **CI/CD:** [.github/workflows/ci.yml](../.github/workflows/ci.yml)
 
 ---
