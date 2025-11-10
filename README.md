@@ -70,8 +70,6 @@ run-analysis.bat analyze owner/repo --llm
 ./run-analysis.sh analyze owner/repo --llm
 ```
 
-See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for detailed Windows configuration guide.
-
 ### Basic Usage
 
 ```bash
@@ -247,21 +245,21 @@ This is a festival submission project. For production use, consider:
 For detailed technical documentation, see:
 
 - **[Documentation Index](docs/README.md)** - Complete documentation guide
-- **[Enterprise Assessment](ENTERPRISE_ASSESSMENT.md)** - ROI analysis of enterprise patterns (Russian)
-- **[Ответ на Вопрос](ОТВЕТ_НА_ВОПРОС.md)** - Краткий ответ: нужна ли enterprise-модернизация? (Russian)
 - **[Architecture Documentation](docs/architecture/C4_ARCHITECTURE.md)** - System design with C4 diagrams
 - **[Architecture Decision Records](docs/architecture/adr/README.md)** - Key architectural decisions
+- **[Implementation Notes](docs/IMPLEMENTATION_NOTES.md)** - What has been implemented
 - **[Modernization Roadmap](docs/MODERNIZATION_ROADMAP.md)** - Implementation status and future work
+- **[Testing Documentation](docs/TESTING_VERIFICATION.md)** - Test results and verification
 
-### Key Documents Summary
+### Quick Documentation Guide
 
 | What You Want | Read This |
 |---------------|-----------|
-| Is enterprise modernization worth it? | [ОТВЕТ_НА_ВОПРОС.md](ОТВЕТ_НА_ВОПРОС.md) (Russian) |
-| Full ROI analysis | [ENTERPRISE_ASSESSMENT.md](ENTERPRISE_ASSESSMENT.md) (Russian) |
+| Quick start guide | This README |
 | What's been implemented? | [docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md) |
 | How is it architected? | [docs/architecture/C4_ARCHITECTURE.md](docs/architecture/C4_ARCHITECTURE.md) |
 | Why was X decision made? | [docs/architecture/adr/](docs/architecture/adr/) |
+| Testing and verification | [docs/TESTING_VERIFICATION.md](docs/TESTING_VERIFICATION.md) |
 
 ## Quality & Security
 
@@ -302,31 +300,41 @@ java -jar target/repo-maintainability-index-1.0.0.jar analyze picocli/picocli
 OPENROUTER_API_KEY="your-key" java -jar target/repo-maintainability-index-1.0.0.jar analyze picocli/picocli --llm
 ```
 
-See [VERIFICATION_SUMMARY.md](VERIFICATION_SUMMARY.md) or [ПРОВЕРКА_ЗАВЕРШЕНА.md](ПРОВЕРКА_ЗАВЕРШЕНА.md) (Russian) for detailed verification results.
+See [docs/TESTING_VERIFICATION.md](docs/TESTING_VERIFICATION.md) for detailed verification results.
 
 ### ✅ LLM Integration Tested
 
-**Real API Testing:** LLM integration tested with actual OpenRouter API key on 2024-11-07
+**Real API Testing:** LLM integration tested with actual OpenRouter API key
 
 - ✅ Tested on: facebook/react repository
 - ✅ All LLM features working (README, Commit Quality, Community Health analysis)
 - ✅ AI recommendations generated successfully
-- ✅ API limits tracked correctly (3/50 requests used)
+- ✅ API limits tracked correctly
 - ✅ Graceful fallback functioning
 - ✅ API keys handled securely (no storage, environment variables only)
 
-See [LLM_TESTING_RESULTS.md](LLM_TESTING_RESULTS.md) for complete LLM testing documentation.
-
 ### 🪟 UTF-8 Support for Windows
 
-**Fixed:** Emoji display issues in Windows consoles (2024-11-08)
+**Fixed:** Emoji display issues in Windows consoles
 
 - ✅ Automatic UTF-8 configuration on startup
 - ✅ Provided scripts: `run-analysis.bat` (Windows), `run-analysis.sh` (Linux/macOS)
-- ✅ Detailed setup guide for all Windows terminals
 - ✅ Tested on Git Bash, Command Prompt, PowerShell, Windows Terminal
 
-If you see question marks (?) instead of emojis, see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) or [UTF8_FIX_SUMMARY.md](UTF8_FIX_SUMMARY.md).
+If you see question marks (?) instead of emojis, try running with UTF-8 encoding:
+```bash
+# Windows Command Prompt
+chcp 65001
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# Git Bash
+export LANG=en_US.UTF-8
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# Or use the provided script
+./run-analysis.bat analyze owner/repo  # Windows
+./run-analysis.sh analyze owner/repo   # Linux/macOS
+```
 
 ## Authors
 

@@ -237,9 +237,10 @@ Revisit architectural decisions if the project evolves into:
 
 ## References
 
-- [Enterprise Assessment](../ENTERPRISE_ASSESSMENT.md) - Full evaluation and rationale
+- [Implementation Notes](IMPLEMENTATION_NOTES.md) - What has been implemented and why
 - [C4 Architecture](architecture/C4_ARCHITECTURE.md) - System architecture
 - [ADR Index](architecture/adr/README.md) - Architecture decisions
+- [Testing Documentation](TESTING_VERIFICATION.md) - Test results and verification
 
 ## Conclusion
 
