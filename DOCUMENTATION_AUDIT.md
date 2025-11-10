@@ -170,7 +170,7 @@ The changes are ready on the `audit-docs-remove-ru-text` branch and can be:
 
 ---
 
-**Audit Date:** 2024  
+**Audit Date:** November 10, 2025  
 **Branch:** audit-docs-remove-ru-text  
 **Status:** ✅ Complete  
 **Files Changed:** 16 (12 deleted, 4 modified)
