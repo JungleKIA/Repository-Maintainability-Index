@@ -19,7 +19,11 @@ public class Main implements Runnable {
             try {
                 // This is a best-effort attempt to set the console to UTF-8.
                 // It might not always succeed, but it helps in many common setups.
-                new ProcessBuilder("cmd", "/c", "chcp 65001 > nul").inheritIO().start().waitFor();
+                Process process = new ProcessBuilder("cmd", "/c", "chcp 65001").start();
+                // Consume streams to prevent process hanging
+                process.getInputStream().close();
+                process.getErrorStream().close();
+                process.waitFor();
             } catch (Exception e) {
                 // Silently ignore if it fails.
             }
