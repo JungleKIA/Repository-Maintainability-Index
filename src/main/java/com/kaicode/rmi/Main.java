@@ -14,23 +14,8 @@ import picocli.CommandLine;
 public class Main implements Runnable {
 
     public static void main(String[] args) {
-        // Force UTF-8 encoding for Windows environments
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            try {
-                // This is a best-effort attempt to set the console to UTF-8.
-                // It might not always succeed, but it helps in many common setups.
-                ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "chcp 65001");
-                pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-                pb.redirectError(ProcessBuilder.Redirect.DISCARD);
-                Process process = pb.start();
-                process.waitFor(1, java.util.concurrent.TimeUnit.SECONDS);
-            } catch (Exception e) {
-                // Silently ignore if it fails.
-            }
-        }
-        
         // Set up UTF-8 encoding for console output streams.
-        // This is crucial for ensuring correct character display.
+        // This is crucial for ensuring correct character display on Windows/GitBash.
         try {
             EncodingHelper.setupUTF8ConsoleStreams();
         } catch (Exception e) {
