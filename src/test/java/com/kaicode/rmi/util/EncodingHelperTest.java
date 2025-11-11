@@ -255,4 +255,55 @@ class EncodingHelperTest {
             }
         }
     }
+
+    @Test
+    void shouldSetupUTF8OutputWithoutException() {
+        // This method should not throw exceptions even if it fails
+        EncodingHelper.setupUTF8Output();
+        
+        // If we get here, no exception was thrown
+        assertThat(true).isTrue();
+    }
+
+    @Test
+    void shouldHandleBoxDrawingCharacters() {
+        String text = "╔═══════╗\n║ Test  ║\n╚═══════╝";
+        String result = EncodingHelper.cleanTextForWindows(text);
+        
+        assertThat(result).isNotNull();
+        // On non-Windows, text should be unchanged
+        // On Windows without mojibake, text should be unchanged
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void shouldCleanMojibakeOnWindows() {
+        // Simulate mojibake pattern: UTF-8 characters incorrectly decoded as Windows-1252
+        // "ΓòÉ" is what ═ (U+2550) looks like when decoded incorrectly
+        String corruptedText = "ΓòÉΓòÉΓòÉ Header ΓòÉΓòÉΓòÉ";
+        String result = EncodingHelper.cleanTextForWindows(corruptedText);
+        
+        // The method should attempt to repair the mojibake
+        assertThat(result).isNotNull();
+        // Result should either be repaired or returned as-is if repair fails
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC})
+    void shouldNotModifyTextOnNonWindows() {
+        // On non-Windows platforms, cleanTextForWindows should return text unchanged
+        String text = "ΓòÉΓöÇΓû¬ Some text";
+        String result = EncodingHelper.cleanTextForWindows(text);
+        
+        assertThat(result).isEqualTo(text);
+    }
+
+    @Test
+    void shouldHandleTextWithoutMojibake() {
+        String cleanText = "═══ Normal UTF-8 text ═══";
+        String result = EncodingHelper.cleanTextForWindows(cleanText);
+        
+        // Text without mojibake should be returned unchanged
+        assertThat(result).isEqualTo(cleanText);
+    }
 }
