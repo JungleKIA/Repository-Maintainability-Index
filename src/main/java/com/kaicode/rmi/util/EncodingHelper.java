@@ -62,7 +62,7 @@ public class EncodingHelper {
      * This method attempts to configure the console to use UTF-8 encoding.
      * This is critical for Windows/GitBash to display Unicode box-drawing characters correctly.
      */
-    public static void configureConsoleEncoding() {
+    public static void setupUTF8ConsoleStreams() {
         try {
             // Create a new PrintStream with UTF-8 encoding
             // This ensures all System.out.println() calls use UTF-8
@@ -84,6 +84,16 @@ public class EncodingHelper {
         } catch (Exception e) {
             // Silently fail - we'll use default encoding
         }
+    }
+
+    /**
+     * Sets UTF-8 as the default console encoding (best effort).
+     * 
+     * @deprecated Use {@link #setupUTF8ConsoleStreams()} instead
+     */
+    @Deprecated
+    public static void configureConsoleEncoding() {
+        setupUTF8ConsoleStreams();
     }
 
     /**

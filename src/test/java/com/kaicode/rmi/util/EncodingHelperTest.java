@@ -87,6 +87,15 @@ class EncodingHelperTest {
     }
 
     @Test
+    void shouldSetupUTF8ConsoleStreamsWithoutException() {
+        // This method should not throw exceptions even if it fails
+        EncodingHelper.setupUTF8ConsoleStreams();
+        
+        // If we get here, no exception was thrown
+        assertThat(true).isTrue();
+    }
+
+    @Test
     void shouldReturnEmptyStringForNullInRemoveEmojis() {
         String result = EncodingHelper.removeEmojis(null);
         
