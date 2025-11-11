@@ -64,6 +64,10 @@ public class EncodingHelper {
      */
     public static void setupUTF8ConsoleStreams() {
         try {
+            // Set system properties to prefer UTF-8
+            System.setProperty("file.encoding", "UTF-8");
+            System.setProperty("sun.jnu.encoding", "UTF-8");
+            
             // Create a new PrintStream with UTF-8 encoding
             // This ensures all System.out.println() calls use UTF-8
             System.setOut(new java.io.PrintStream(
