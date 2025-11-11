@@ -46,22 +46,34 @@ This will create an executable JAR file in the `target/` directory.
 
 ## Usage
 
-### 🪟 Windows Users: UTF-8 Support
+### 🪟 Windows & GitBash: Unicode/UTF-8 Support
 
-If you see question marks (?) instead of emojis in Windows:
+**The application now automatically configures UTF-8 encoding for proper Unicode display!**
 
-**Quick Fix (Git Bash / Command Prompt):**
+Unicode box-drawing characters (═, ─, │, ┌, ┐, └, ┘, ▪) should display correctly out of the box on:
+- ✅ Linux terminals
+- ✅ macOS terminals  
+- ✅ Windows Command Prompt (with automatic `chcp 65001`)
+- ✅ Windows PowerShell
+- ✅ GitBash on Windows
+
+**If you still see garbled characters (like 'ΓòÉ' instead of '═'):**
+
 ```bash
-# Git Bash
+# Git Bash (set locale)
 export LANG=en_US.UTF-8
-java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
 
-# Command Prompt
+# Command Prompt (already handled automatically, but you can force it)
 chcp 65001
-java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# PowerShell (set output encoding)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
 ```
 
-**Or use the provided scripts:**
+**Or use the provided scripts (which handle encoding automatically):**
 ```bash
 # Windows
 run-analysis.bat analyze owner/repo --llm

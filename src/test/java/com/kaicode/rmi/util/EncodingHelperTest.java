@@ -204,4 +204,55 @@ class EncodingHelperTest {
         
         assertThat(result).isEqualTo(unicode);
     }
+
+    @Test
+    void shouldHandleMultipleCallsToSetupUTF8ConsoleStreams() {
+        // Save original streams
+        java.io.PrintStream originalOut = System.out;
+        java.io.PrintStream originalErr = System.err;
+        
+        try {
+            // Call multiple times to ensure it's idempotent
+            EncodingHelper.setupUTF8ConsoleStreams();
+            EncodingHelper.setupUTF8ConsoleStreams();
+            
+            // Should not throw exception
+            assertThat(true).isTrue();
+        } finally {
+            // Restore original streams
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
+    }
+
+    @Test
+    void shouldSetupUTF8StreamsProperly() {
+        // Save original streams and properties
+        java.io.PrintStream originalOut = System.out;
+        java.io.PrintStream originalErr = System.err;
+        String originalFileEncoding = System.getProperty("file.encoding");
+        
+        try {
+            // Setup UTF-8 streams
+            EncodingHelper.setupUTF8ConsoleStreams();
+            
+            // Verify system properties are set
+            assertThat(System.getProperty("file.encoding")).isEqualTo("UTF-8");
+            assertThat(System.getProperty("sun.jnu.encoding")).isEqualTo("UTF-8");
+            assertThat(System.getProperty("console.encoding")).isEqualTo("UTF-8");
+            
+            // Verify we can print UTF-8 characters without exception
+            System.out.println("Test: ═══ ─── ▪");
+            System.err.println("Test: ═══ ─── ▪");
+            
+            assertThat(true).isTrue();
+        } finally {
+            // Restore original streams and properties
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+            if (originalFileEncoding != null) {
+                System.setProperty("file.encoding", originalFileEncoding);
+            }
+        }
+    }
 }

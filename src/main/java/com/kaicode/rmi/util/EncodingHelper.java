@@ -67,24 +67,49 @@ public class EncodingHelper {
             // Set system properties to prefer UTF-8
             System.setProperty("file.encoding", "UTF-8");
             System.setProperty("sun.jnu.encoding", "UTF-8");
+            System.setProperty("console.encoding", "UTF-8");
+            
+            // For Windows, try to set console code page to UTF-8 (65001)
+            if (isWindows()) {
+                try {
+                    // Execute chcp 65001 to set console to UTF-8
+                    // This works for cmd.exe and sometimes for GitBash
+                    ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "chcp", "65001");
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+                    process.waitFor();
+                } catch (Exception e) {
+                    // Ignore - may not work in all environments (e.g., GitBash)
+                }
+            }
             
             // Create a new PrintStream with UTF-8 encoding
             // This ensures all System.out.println() calls use UTF-8
+            // Use FileDescriptor directly for better compatibility with GitBash
             System.setOut(new java.io.PrintStream(
-                new java.io.BufferedOutputStream(
-                    new java.io.FileOutputStream(java.io.FileDescriptor.out)
-                ),
-                true,  // autoFlush
+                new java.io.FileOutputStream(java.io.FileDescriptor.out),
+                true,  // autoFlush - critical for GitBash
                 StandardCharsets.UTF_8
             ));
             
             System.setErr(new java.io.PrintStream(
-                new java.io.BufferedOutputStream(
-                    new java.io.FileOutputStream(java.io.FileDescriptor.err)
-                ),
-                true,  // autoFlush
+                new java.io.FileOutputStream(java.io.FileDescriptor.err),
+                true,  // autoFlush - critical for GitBash
                 StandardCharsets.UTF_8
             ));
+            
+            // Configure java.util.logging to use UTF-8
+            try {
+                java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+                java.util.logging.Handler[] handlers = rootLogger.getHandlers();
+                for (java.util.logging.Handler handler : handlers) {
+                    if (handler instanceof java.util.logging.ConsoleHandler) {
+                        handler.setEncoding("UTF-8");
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore - logging configuration is optional
+            }
         } catch (Exception e) {
             // Silently fail - we'll use default encoding
         }
