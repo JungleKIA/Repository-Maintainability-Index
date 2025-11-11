@@ -14,13 +14,18 @@ class MainTest {
     void shouldShowHelpWhenNoArgumentsProvided() {
         Main main = new Main();
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
-
-        main.run();
-
-        String output = outContent.toString();
-        assertThat(output).contains("analyze");
-        assertThat(output).contains("help");
+        PrintStream originalOut = System.out;
+        
+        try {
+            System.setOut(new PrintStream(outContent));
+            main.run();
+            
+            String output = outContent.toString();
+            assertThat(output).contains("analyze");
+            assertThat(output).contains("help");
+        } finally {
+            System.setOut(originalOut);
+        }
     }
 
     @Test
