@@ -306,4 +306,62 @@ class EncodingHelperTest {
         // Text without mojibake should be returned unchanged
         assertThat(result).isEqualTo(cleanText);
     }
+
+    @Test
+    void shouldHandleMultipleMojibakePatterns() {
+        String textWithMojibake = "ΓòÉΓòÉ Header ΓöÇΓöÇ Text Γû¬ Bullet";
+        String result = EncodingHelper.cleanTextForWindows(textWithMojibake);
+        
+        // Result should be processed (either repaired or returned as-is)
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void shouldHandleVerticalBarMojibake() {
+        String textWithMojibake = "Γöé Some text with vertical bar";
+        String result = EncodingHelper.cleanTextForWindows(textWithMojibake);
+        
+        // Result should be processed
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void shouldHandleEmptyAfterMojibakeDetection() {
+        // Edge case: empty string should not trigger mojibake detection
+        String emptyText = "";
+        String result = EncodingHelper.cleanTextForWindows(emptyText);
+        
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldHandleNullSafely() {
+        // Null should be handled safely
+        String result = EncodingHelper.cleanTextForWindows(null);
+        
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldHandleLongTextWithMojibake() {
+        // Long text with mojibake patterns
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 100; i++) {
+            text.append("ΓòÉ Line ").append(i).append(" ΓöÇ\n");
+        }
+        
+        String result = EncodingHelper.cleanTextForWindows(text.toString());
+        
+        // Should not throw exception
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void shouldHandleMixedMojibakeAndCleanText() {
+        String mixed = "Clean text ═══ ΓòÉ Mojibake ΓöÇ More clean ───";
+        String result = EncodingHelper.cleanTextForWindows(mixed);
+        
+        // Should handle mixed content
+        assertThat(result).isNotNull();
+    }
 }
