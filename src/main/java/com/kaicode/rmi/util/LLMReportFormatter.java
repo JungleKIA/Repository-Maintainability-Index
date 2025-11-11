@@ -25,20 +25,24 @@ public class LLMReportFormatter {
 
     private String formatBasicReport(MaintainabilityReport report) {
         StringBuilder text = new StringBuilder();
-        text.append("═══════════════════════════════════════════════════════════════\n");
+        String doubleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getDoubleHorizontalLine(), 63);
+        String singleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getSingleHorizontalLine(), 63);
+        String bullet = EncodingHelper.getBulletPoint();
+        
+        text.append(doubleLine).append("\n");
         text.append("  Repository Maintainability Index Report\n");
-        text.append("═══════════════════════════════════════════════════════════════\n\n");
+        text.append(doubleLine).append("\n\n");
         text.append("Repository: ").append(report.getRepositoryFullName()).append("\n");
         text.append("Overall Score: ").append(String.format("%.2f", report.getOverallScore())).append("/100\n");
         text.append("Rating: ").append(report.getRating()).append("\n\n");
         
-        text.append("───────────────────────────────────────────────────────────────\n");
+        text.append(singleLine).append("\n");
         text.append("  Detailed Metrics\n");
-        text.append("───────────────────────────────────────────────────────────────\n\n");
+        text.append(singleLine).append("\n\n");
         
         for (MetricResult metric : report.getMetrics().values()) {
-            text.append(String.format("▪ %s: %.2f/100 (weight: %.0f%%)\n", 
-                    metric.getName(), metric.getScore(), metric.getWeight() * 100));
+            text.append(String.format("%s %s: %.2f/100 (weight: %.0f%%)\n", 
+                    bullet, metric.getName(), metric.getScore(), metric.getWeight() * 100));
             text.append("  ").append(metric.getDescription()).append("\n");
             if (metric.getDetails() != null && !metric.getDetails().isEmpty()) {
                 text.append("  Details: ").append(metric.getDetails()).append("\n");
@@ -51,9 +55,10 @@ public class LLMReportFormatter {
 
     private String formatLLMInsights(LLMAnalysis analysis) {
         StringBuilder text = new StringBuilder();
+        String doubleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getDoubleHorizontalLine(), 75);
         
         text.append("🤖 LLM INSIGHTS\n");
-        text.append("═══════════════════════════════════════════════════════════════════════════\n");
+        text.append(doubleLine).append("\n");
         
         text.append(formatReadmeAnalysis(analysis.getReadmeAnalysis()));
         text.append("\n");
@@ -151,41 +156,59 @@ public class LLMReportFormatter {
     private String formatTopRecommendations(List<LLMAnalysis.AIRecommendation> recommendations) {
         StringBuilder text = new StringBuilder();
         text.append("\n");
-        text.append("┌─────────────────────────────────────────────────────────────────────────┐\n");
-        text.append("│                        💡 TOP AI RECOMMENDATIONS:                       │\n");
-        text.append("├─────────────────────────────────────────────────────────────────────────┤\n");
+        
+        String topLeft = EncodingHelper.getBoxTopLeft();
+        String topRight = EncodingHelper.getBoxTopRight();
+        String bottomLeft = EncodingHelper.getBoxBottomLeft();
+        String bottomRight = EncodingHelper.getBoxBottomRight();
+        String vertical = EncodingHelper.getBoxVerticalLine();
+        String middleLeft = EncodingHelper.getBoxMiddleLeft();
+        String middleRight = EncodingHelper.getBoxMiddleRight();
+        String horizontal = EncodingHelper.createSeparatorLine(EncodingHelper.getSingleHorizontalLine(), 73);
+        
+        text.append(topLeft).append(horizontal).append(topRight).append("\n");
+        text.append(vertical).append("                        💡 TOP AI RECOMMENDATIONS:                       ").append(vertical).append("\n");
+        text.append(middleLeft).append(horizontal).append(middleRight).append("\n");
         
         int count = Math.min(3, recommendations.size());
         String[] medals = {"🥇", "🥈", "🥉"};
         
         for (int i = 0; i < count; i++) {
             LLMAnalysis.AIRecommendation rec = recommendations.get(i);
-            text.append(String.format("│ %s %s %-66s │\n", medals[i], rec.getSeverity(), rec.getTitle()));
-            text.append(String.format("│    %-70s │\n", rec.getDescription()));
-            text.append(String.format("│    Impact: %d%%, Confidence: %d%%%-42s │\n", 
-                    rec.getImpact(), rec.getConfidence(), ""));
+            text.append(String.format("%s %s %s %-66s %s\n", vertical, medals[i], rec.getSeverity(), rec.getTitle(), vertical));
+            text.append(String.format("%s    %-70s %s\n", vertical, rec.getDescription(), vertical));
+            text.append(String.format("%s    Impact: %d%%, Confidence: %d%%%-42s %s\n", 
+                    vertical, rec.getImpact(), rec.getConfidence(), "", vertical));
             if (i < count - 1) {
-                text.append("│                                                                         │\n");
+                text.append(String.format("%s                                                                         %s\n", vertical, vertical));
             }
         }
         
         if (recommendations.size() > 3) {
-            text.append(String.format("│    ... and %d more recommendations%-38s │\n", 
-                    recommendations.size() - 3, ""));
+            text.append(String.format("%s    ... and %d more recommendations%-38s %s\n", 
+                    vertical, recommendations.size() - 3, "", vertical));
         }
         
-        text.append("└─────────────────────────────────────────────────────────────────────────┘\n");
+        text.append(bottomLeft).append(horizontal).append(bottomRight).append("\n");
         
         return text.toString();
     }
 
     private String formatAPILimits() {
         StringBuilder text = new StringBuilder();
+        String doubleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getDoubleHorizontalLine(), 75);
+        String topLeft = EncodingHelper.getBoxTopLeft();
+        String topRight = EncodingHelper.getBoxTopRight();
+        String bottomLeft = EncodingHelper.getBoxBottomLeft();
+        String bottomRight = EncodingHelper.getBoxBottomRight();
+        String vertical = EncodingHelper.getBoxVerticalLine();
+        String horizontal = EncodingHelper.createSeparatorLine(EncodingHelper.getSingleHorizontalLine(), 73);
+        
         text.append("📊 API LIMITS STATUS\n");
-        text.append("═══════════════════════════════════════════════════════════════════════════\n");
-        text.append("┌─────────────────────────────────────────────────────────────────────────┐\n");
-        text.append("│                          📊 MODEL LIMITS STATUS                         │\n");
-        text.append("└─────────────────────────────────────────────────────────────────────────┘\n");
+        text.append(doubleLine).append("\n");
+        text.append(topLeft).append(horizontal).append(topRight).append("\n");
+        text.append(vertical).append("                          📊 MODEL LIMITS STATUS                         ").append(vertical).append("\n");
+        text.append(bottomLeft).append(horizontal).append(bottomRight).append("\n");
         text.append("📊 openai/gpt-oss-20b: ✅ Available\n");
         text.append("   Usage: 3/50 requests (6,0%)\n");
         text.append("   Remaining: 47 requests\n");
@@ -194,8 +217,10 @@ public class LLMReportFormatter {
 
     private String formatCombinedRecommendations(MaintainabilityReport report, LLMAnalysis analysis) {
         StringBuilder text = new StringBuilder();
+        String doubleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getDoubleHorizontalLine(), 75);
+        
         text.append("💡 RECOMMENDATIONS\n");
-        text.append("═══════════════════════════════════════════════════════════════════════════\n");
+        text.append(doubleLine).append("\n");
         
         List<String> allRecommendations = new ArrayList<>();
         

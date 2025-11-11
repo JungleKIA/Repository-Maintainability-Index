@@ -95,4 +95,133 @@ public class EncodingHelper {
         String encoding = System.getProperty("file.encoding");
         return encoding != null && encoding.toLowerCase().contains("utf");
     }
+
+    /**
+     * Checks if we're running in Git Bash or similar environment on Windows.
+     * These environments often have issues with box-drawing characters.
+     * 
+     * @return true if running in Git Bash on Windows, false otherwise
+     */
+    public static boolean isGitBashOnWindows() {
+        if (!isWindows()) {
+            return false;
+        }
+        
+        // Check for common Git Bash environment variables
+        String msystem = System.getenv("MSYSTEM");
+        String term = System.getenv("TERM");
+        
+        return (msystem != null && (msystem.contains("MINGW") || msystem.contains("MSYS"))) ||
+               (term != null && term.contains("xterm"));
+    }
+
+    /**
+     * Determines if we should use ASCII-safe characters instead of Unicode box-drawing characters.
+     * 
+     * @return true if ASCII characters should be used, false otherwise
+     */
+    public static boolean shouldUseAsciiCharacters() {
+        return isWindows() || isGitBashOnWindows();
+    }
+
+    /**
+     * Gets the appropriate horizontal line character for the current environment.
+     * 
+     * @return '=' for ASCII-safe environments, '═' for full Unicode support
+     */
+    public static String getDoubleHorizontalLine() {
+        return shouldUseAsciiCharacters() ? "=" : "═";
+    }
+
+    /**
+     * Gets the appropriate single horizontal line character for the current environment.
+     * 
+     * @return '-' for ASCII-safe environments, '─' for full Unicode support
+     */
+    public static String getSingleHorizontalLine() {
+        return shouldUseAsciiCharacters() ? "-" : "─";
+    }
+
+    /**
+     * Gets the appropriate bullet point character for the current environment.
+     * 
+     * @return '*' for ASCII-safe environments, '▪' for full Unicode support
+     */
+    public static String getBulletPoint() {
+        return shouldUseAsciiCharacters() ? "*" : "▪";
+    }
+
+    /**
+     * Gets the appropriate box top-left corner for the current environment.
+     * 
+     * @return '+' for ASCII-safe environments, '┌' for full Unicode support
+     */
+    public static String getBoxTopLeft() {
+        return shouldUseAsciiCharacters() ? "+" : "┌";
+    }
+
+    /**
+     * Gets the appropriate box top-right corner for the current environment.
+     * 
+     * @return '+' for ASCII-safe environments, '┐' for full Unicode support
+     */
+    public static String getBoxTopRight() {
+        return shouldUseAsciiCharacters() ? "+" : "┐";
+    }
+
+    /**
+     * Gets the appropriate box bottom-left corner for the current environment.
+     * 
+     * @return '+' for ASCII-safe environments, '└' for full Unicode support
+     */
+    public static String getBoxBottomLeft() {
+        return shouldUseAsciiCharacters() ? "+" : "└";
+    }
+
+    /**
+     * Gets the appropriate box bottom-right corner for the current environment.
+     * 
+     * @return '+' for ASCII-safe environments, '┘' for full Unicode support
+     */
+    public static String getBoxBottomRight() {
+        return shouldUseAsciiCharacters() ? "+" : "┘";
+    }
+
+    /**
+     * Gets the appropriate box vertical line for the current environment.
+     * 
+     * @return '|' for ASCII-safe environments, '│' for full Unicode support
+     */
+    public static String getBoxVerticalLine() {
+        return shouldUseAsciiCharacters() ? "|" : "│";
+    }
+
+    /**
+     * Gets the appropriate box middle-left for the current environment.
+     * 
+     * @return '+' for ASCII-safe environments, '├' for full Unicode support
+     */
+    public static String getBoxMiddleLeft() {
+        return shouldUseAsciiCharacters() ? "+" : "├";
+    }
+
+    /**
+     * Gets the appropriate box middle-right for the current environment.
+     * 
+     * @return '+' for ASCII-safe environments, '┤' for full Unicode support
+     */
+    public static String getBoxMiddleRight() {
+        return shouldUseAsciiCharacters() ? "+" : "┤";
+    }
+
+    /**
+     * Creates a horizontal separator line with the specified character and length.
+     * 
+     * @param character the character to repeat
+     * @param length the length of the line
+     * @return the separator line
+     */
+    public static String createSeparatorLine(String character, int length) {
+        return character.repeat(length);
+    }
 }
