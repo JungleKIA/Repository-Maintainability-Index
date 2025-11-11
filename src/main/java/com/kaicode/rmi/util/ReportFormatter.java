@@ -46,24 +46,20 @@ public class ReportFormatter {
 
     private String formatText(MaintainabilityReport report) {
         StringBuilder text = new StringBuilder();
-        String doubleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getDoubleHorizontalLine(), 63);
-        String singleLine = EncodingHelper.createSeparatorLine(EncodingHelper.getSingleHorizontalLine(), 63);
-        String bullet = EncodingHelper.getBulletPoint();
-        
-        text.append(doubleLine).append("\n");
+        text.append("═══════════════════════════════════════════════════════════════\n");
         text.append("  Repository Maintainability Index Report\n");
-        text.append(doubleLine).append("\n\n");
+        text.append("═══════════════════════════════════════════════════════════════\n\n");
         text.append("Repository: ").append(report.getRepositoryFullName()).append("\n");
         text.append("Overall Score: ").append(String.format("%.2f", report.getOverallScore())).append("/100\n");
         text.append("Rating: ").append(report.getRating()).append("\n\n");
         
-        text.append(singleLine).append("\n");
+        text.append("───────────────────────────────────────────────────────────────\n");
         text.append("  Detailed Metrics\n");
-        text.append(singleLine).append("\n\n");
+        text.append("───────────────────────────────────────────────────────────────\n\n");
         
         for (MetricResult metric : report.getMetrics().values()) {
-            text.append(String.format("%s %s: %.2f/100 (weight: %.0f%%)\n", 
-                    bullet, metric.getName(), metric.getScore(), metric.getWeight() * 100));
+            text.append(String.format("▪ %s: %.2f/100 (weight: %.0f%%)\n", 
+                    metric.getName(), metric.getScore(), metric.getWeight() * 100));
             text.append("  ").append(metric.getDescription()).append("\n");
             if (metric.getDetails() != null && !metric.getDetails().isEmpty()) {
                 text.append("  Details: ").append(metric.getDetails()).append("\n");
@@ -71,11 +67,11 @@ public class ReportFormatter {
             text.append("\n");
         }
         
-        text.append(singleLine).append("\n");
+        text.append("───────────────────────────────────────────────────────────────\n");
         text.append("  Recommendation\n");
-        text.append(singleLine).append("\n\n");
+        text.append("───────────────────────────────────────────────────────────────\n\n");
         text.append(report.getRecommendation()).append("\n");
-        text.append("\n").append(doubleLine).append("\n");
+        text.append("\n═══════════════════════════════════════════════════════════════\n");
         
         return text.toString();
     }
