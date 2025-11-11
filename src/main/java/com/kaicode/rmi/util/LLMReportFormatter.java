@@ -194,6 +194,7 @@ public class LLMReportFormatter {
 
     private String formatCombinedRecommendations(MaintainabilityReport report, LLMAnalysis analysis) {
         StringBuilder text = new StringBuilder();
+        
         text.append("💡 RECOMMENDATIONS\n");
         text.append("═══════════════════════════════════════════════════════════════════════════\n");
         

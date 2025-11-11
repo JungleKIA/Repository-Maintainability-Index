@@ -14,8 +14,8 @@ import picocli.CommandLine;
 public class Main implements Runnable {
 
     public static void main(String[] args) {
-        // Configure UTF-8 encoding for console output (especially important for Windows)
-        EncodingHelper.configureConsoleEncoding();
+        // Configure UTF-8 encoding for console output (especially important for Windows/GitBash)
+        EncodingHelper.setupUTF8ConsoleStreams();
         
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);

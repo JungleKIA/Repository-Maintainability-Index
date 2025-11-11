@@ -79,11 +79,40 @@ class EncodingHelperTest {
 
     @Test
     void shouldConfigureConsoleEncodingWithoutException() {
-        // This method should not throw exceptions even if it fails
-        EncodingHelper.configureConsoleEncoding();
+        // Save original streams
+        java.io.PrintStream originalOut = System.out;
+        java.io.PrintStream originalErr = System.err;
         
-        // If we get here, no exception was thrown
-        assertThat(true).isTrue();
+        try {
+            // This method should not throw exceptions even if it fails
+            EncodingHelper.configureConsoleEncoding();
+            
+            // If we get here, no exception was thrown
+            assertThat(true).isTrue();
+        } finally {
+            // Restore original streams
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
+    }
+
+    @Test
+    void shouldSetupUTF8ConsoleStreamsWithoutException() {
+        // Save original streams
+        java.io.PrintStream originalOut = System.out;
+        java.io.PrintStream originalErr = System.err;
+        
+        try {
+            // This method should not throw exceptions even if it fails
+            EncodingHelper.setupUTF8ConsoleStreams();
+            
+            // If we get here, no exception was thrown
+            assertThat(true).isTrue();
+        } finally {
+            // Restore original streams
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
     }
 
     @Test

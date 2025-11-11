@@ -16,11 +16,15 @@ class AnalyzeCommandTest {
         CommandLine cmd = new CommandLine(command);
 
         ByteArrayOutputStream errContent = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(errContent));
-
-        int exitCode = cmd.execute("invalid-repo-format");
-
-        assertThat(exitCode).isEqualTo(1);
+        PrintStream originalErr = System.err;
+        
+        try {
+            System.setErr(new PrintStream(errContent));
+            int exitCode = cmd.execute("invalid-repo-format");
+            assertThat(exitCode).isEqualTo(1);
+        } finally {
+            System.setErr(originalErr);
+        }
     }
 
     @Test

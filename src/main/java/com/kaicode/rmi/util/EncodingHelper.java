@@ -60,15 +60,44 @@ public class EncodingHelper {
      * Sets UTF-8 as the default console encoding (best effort).
      * 
      * This method attempts to configure the console to use UTF-8 encoding.
-     * Note: This may not work in all environments, especially in Windows.
+     * This is critical for Windows/GitBash to display Unicode box-drawing characters correctly.
      */
-    public static void configureConsoleEncoding() {
+    public static void setupUTF8ConsoleStreams() {
         try {
-            // Try to set UTF-8 for System.out
-            System.setOut(new java.io.PrintStream(System.out, true, StandardCharsets.UTF_8));
+            // Set system properties to prefer UTF-8
+            System.setProperty("file.encoding", "UTF-8");
+            System.setProperty("sun.jnu.encoding", "UTF-8");
+            
+            // Create a new PrintStream with UTF-8 encoding
+            // This ensures all System.out.println() calls use UTF-8
+            System.setOut(new java.io.PrintStream(
+                new java.io.BufferedOutputStream(
+                    new java.io.FileOutputStream(java.io.FileDescriptor.out)
+                ),
+                true,  // autoFlush
+                StandardCharsets.UTF_8
+            ));
+            
+            System.setErr(new java.io.PrintStream(
+                new java.io.BufferedOutputStream(
+                    new java.io.FileOutputStream(java.io.FileDescriptor.err)
+                ),
+                true,  // autoFlush
+                StandardCharsets.UTF_8
+            ));
         } catch (Exception e) {
-            // Silently fail - we'll use other methods
+            // Silently fail - we'll use default encoding
         }
+    }
+
+    /**
+     * Sets UTF-8 as the default console encoding (best effort).
+     * 
+     * @deprecated Use {@link #setupUTF8ConsoleStreams()} instead
+     */
+    @Deprecated
+    public static void configureConsoleEncoding() {
+        setupUTF8ConsoleStreams();
     }
 
     /**
