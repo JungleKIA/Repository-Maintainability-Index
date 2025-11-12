@@ -73,10 +73,7 @@ public class ReportFormatter {
         text.append(report.getRecommendation()).append("\n");
         text.append("\n═══════════════════════════════════════════════════════════════\n");
         
-        // Clean text for Windows console to fix any mojibake (corrupted UTF-8 sequences)
-        // This is a safety net in case encoding setup didn't work perfectly
-        String result = text.toString();
-        return EncodingHelper.cleanTextForWindows(result);
+        return text.toString();
     }
 
     private String escapeJson(String str) {

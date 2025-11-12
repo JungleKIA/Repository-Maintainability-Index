@@ -20,10 +20,7 @@ public class LLMReportFormatter {
         output.append("\n\n");
         output.append(formatCombinedRecommendations(report, llmAnalysis));
         
-        // Clean text for Windows console to fix any mojibake (corrupted UTF-8 sequences)
-        // This is a safety net in case encoding setup didn't work perfectly
-        String result = output.toString();
-        return EncodingHelper.cleanTextForWindows(result);
+        return output.toString();
     }
 
     private String formatBasicReport(MaintainabilityReport report) {

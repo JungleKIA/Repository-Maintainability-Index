@@ -154,19 +154,33 @@ public class EncodingHelper {
             }
             
             // Step 3: Reconfigure System.out and System.err with UTF-8 encoding
-            // Use FileDescriptor directly for better compatibility with GitBash
-            // DO NOT use BufferedOutputStream - it can corrupt UTF-8 multi-byte sequences
-            System.setOut(new java.io.PrintStream(
-                new java.io.FileOutputStream(java.io.FileDescriptor.out),
-                true,  // autoFlush - CRITICAL for GitBash to prevent corruption
-                StandardCharsets.UTF_8
-            ));
-            
-            System.setErr(new java.io.PrintStream(
-                new java.io.FileOutputStream(java.io.FileDescriptor.err),
-                true,  // autoFlush - CRITICAL for GitBash to prevent corruption
-                StandardCharsets.UTF_8
-            ));
+            // Use PrintStream with explicit UTF-8 charset for compatibility with GitBash
+            // Important: charset parameter is only available in Java 10+
+            try {
+                // Try Java 10+ constructor with Charset parameter
+                System.setOut(new java.io.PrintStream(System.out, true, StandardCharsets.UTF_8));
+                System.setErr(new java.io.PrintStream(System.err, true, StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                // Fallback for older Java or if above fails
+                // Wrap the output streams with UTF-8 OutputStreamWriter
+                System.setOut(new java.io.PrintStream(
+                    new java.io.BufferedOutputStream(
+                        new java.io.FileOutputStream(java.io.FileDescriptor.out), 
+                        128
+                    ),
+                    true,  // autoFlush
+                    StandardCharsets.UTF_8.name()
+                ));
+                
+                System.setErr(new java.io.PrintStream(
+                    new java.io.BufferedOutputStream(
+                        new java.io.FileOutputStream(java.io.FileDescriptor.err),
+                        128
+                    ),
+                    true,  // autoFlush
+                    StandardCharsets.UTF_8.name()
+                ));
+            }
             
             // Step 4: Configure java.util.logging to use UTF-8
             try {
