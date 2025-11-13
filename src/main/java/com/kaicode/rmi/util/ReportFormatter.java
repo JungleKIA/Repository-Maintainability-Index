@@ -73,7 +73,9 @@ public class ReportFormatter {
         text.append(report.getRecommendation()).append("\n");
         text.append("\n═══════════════════════════════════════════════════════════════\n");
         
-        return text.toString();
+        // Clean text from mojibake (corrupted UTF-8 sequences)
+        // This fixes characters that GitBash displays incorrectly
+        return EncodingHelper.cleanTextForWindows(text.toString());
     }
 
     private String escapeJson(String str) {

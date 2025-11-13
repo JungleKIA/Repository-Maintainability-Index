@@ -4,7 +4,6 @@ import com.kaicode.rmi.github.GitHubClient;
 import com.kaicode.rmi.model.MaintainabilityReport;
 import com.kaicode.rmi.service.MaintainabilityService;
 import com.kaicode.rmi.util.ReportFormatter;
-import com.kaicode.rmi.util.UTF8Console;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -69,8 +68,8 @@ public class AnalyzeCommand implements Callable<Integer> {
                 
                 com.kaicode.rmi.util.LLMReportFormatter llmFormatter = new com.kaicode.rmi.util.LLMReportFormatter();
                 String output = llmFormatter.formatWithLLM(report, llmAnalysis);
-                // Use UTF8Console for reliable Unicode output in Windows/GitBash
-                UTF8Console.println(output);
+                // Output is already cleaned by LLMReportFormatter
+                System.out.println(output);
             } else {
                 ReportFormatter formatter = new ReportFormatter();
                 ReportFormatter.OutputFormat outputFormat = format.equalsIgnoreCase("json")
@@ -78,8 +77,8 @@ public class AnalyzeCommand implements Callable<Integer> {
                         : ReportFormatter.OutputFormat.TEXT;
 
                 String output = formatter.format(report, outputFormat);
-                // Use UTF8Console for reliable Unicode output in Windows/GitBash
-                UTF8Console.println(output);
+                // Output is already cleaned by ReportFormatter
+                System.out.println(output);
             }
 
             return 0;

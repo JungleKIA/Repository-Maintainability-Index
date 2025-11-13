@@ -20,7 +20,9 @@ public class LLMReportFormatter {
         output.append("\n\n");
         output.append(formatCombinedRecommendations(report, llmAnalysis));
         
-        return output.toString();
+        // Clean text from mojibake (corrupted UTF-8 sequences)
+        // This fixes characters that GitBash displays incorrectly
+        return EncodingHelper.cleanTextForWindows(output.toString());
     }
 
     private String formatBasicReport(MaintainabilityReport report) {

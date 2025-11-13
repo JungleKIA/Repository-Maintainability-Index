@@ -1,120 +1,91 @@
 package com.kaicode.rmi.util;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 /**
  * UTF-8 console output wrapper for Windows/GitBash compatibility.
  * 
- * This class provides a reliable way to output UTF-8 text to console,
- * especially for Windows GitBash where standard System.out may not handle
- * Unicode characters correctly.
+ * This class has been replaced by a simpler approach:
+ * 1. EncodingHelper.setupUTF8ConsoleStreams() wraps System.out/err with UTF-8
+ * 2. EncodingHelper.cleanTextForWindows() fixes mojibake in output text
+ * 3. Use standard System.out.println() for output
  * 
- * Key approach: Write raw UTF-8 bytes directly to System.out, bypassing
- * all Java encoding layers that might corrupt the output.
+ * @deprecated Use EncodingHelper.cleanTextForWindows() instead
  */
+@Deprecated
 public class UTF8Console {
     
     /**
      * Initializes UTF-8 console writers.
-     * For this implementation, no initialization is needed as we write directly to System.out.
+     * This is now handled by EncodingHelper.setupUTF8ConsoleStreams().
+     * 
+     * @deprecated No longer needed
      */
+    @Deprecated
     public static void initialize() {
-        // No-op: We write directly to System.out as raw UTF-8 bytes
+        // No-op: Initialization now done in EncodingHelper
     }
     
     /**
-     * Prints text to stdout using UTF-8 encoding.
-     * Writes raw UTF-8 bytes directly to System.out.
+     * Prints text to stdout.
+     * Use standard System.out.print() instead.
      * 
      * @param text the text to print
+     * @deprecated Use System.out.print(EncodingHelper.cleanTextForWindows(text))
      */
+    @Deprecated
     public static void print(String text) {
-        try {
-            if (text != null) {
-                // Convert to UTF-8 bytes and write directly
-                byte[] utf8Bytes = text.getBytes(StandardCharsets.UTF_8);
-                System.out.write(utf8Bytes);
-                System.out.flush();
-            }
-        } catch (IOException e) {
-            // Fallback to standard println if direct write fails
-            System.out.print(text);
-        }
+        System.out.print(text);
     }
     
     /**
-     * Prints text to stdout with newline using UTF-8 encoding.
-     * Writes raw UTF-8 bytes directly to System.out.
+     * Prints text to stdout with newline.
+     * Use standard System.out.println() instead.
      * 
      * @param text the text to print
+     * @deprecated Use System.out.println(EncodingHelper.cleanTextForWindows(text))
      */
+    @Deprecated
     public static void println(String text) {
-        try {
-            if (text != null) {
-                // Convert to UTF-8 bytes and write directly
-                byte[] utf8Bytes = (text + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
-                System.out.write(utf8Bytes);
-                System.out.flush();
-            }
-        } catch (IOException e) {
-            // Fallback to standard println if direct write fails
-            System.out.println(text);
-        }
+        System.out.println(text);
     }
     
     /**
      * Prints empty line to stdout.
+     * 
+     * @deprecated Use System.out.println()
      */
+    @Deprecated
     public static void println() {
-        try {
-            byte[] newline = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
-            System.out.write(newline);
-            System.out.flush();
-        } catch (IOException e) {
-            System.out.println();
-        }
+        System.out.println();
     }
     
     /**
-     * Prints error text to stderr using UTF-8 encoding.
-     * Writes raw UTF-8 bytes directly to System.err.
+     * Prints error text to stderr.
      * 
      * @param text the error text to print
+     * @deprecated Use System.err.print(text)
      */
+    @Deprecated
     public static void printErr(String text) {
-        try {
-            if (text != null) {
-                byte[] utf8Bytes = text.getBytes(StandardCharsets.UTF_8);
-                System.err.write(utf8Bytes);
-                System.err.flush();
-            }
-        } catch (IOException e) {
-            System.err.print(text);
-        }
+        System.err.print(text);
     }
     
     /**
-     * Prints error text to stderr with newline using UTF-8 encoding.
-     * Writes raw UTF-8 bytes directly to System.err.
+     * Prints error text to stderr with newline.
      * 
      * @param text the error text to print
+     * @deprecated Use System.err.println(text)
      */
+    @Deprecated
     public static void printlnErr(String text) {
-        try {
-            if (text != null) {
-                byte[] utf8Bytes = (text + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
-                System.err.write(utf8Bytes);
-                System.err.flush();
-            }
-        } catch (IOException e) {
-            System.err.println(text);
-        }
+        System.err.println(text);
     }
     
     /**
      * Flushes the output buffers.
+     * 
+     * @deprecated Use System.out.flush() directly
      */
+    @Deprecated
     public static void flush() {
         System.out.flush();
         System.err.flush();

@@ -33,6 +33,8 @@ public class EncodingHelper {
      * - "ΓòÉ" should be "═" (U+2550)
      * - "ΓöÇ" should be "─" (U+2500)
      * - "Γû¬" should be "▪" (U+25AA)
+     * - "â€œ" should be """ (left double quote)
+     * - "â€"" should be "–" (en dash)
      * 
      * @param text the text to clean
      * @return cleaned text with mojibake repaired
@@ -42,52 +44,35 @@ public class EncodingHelper {
             return "";
         }
 
-        // Check if we're running on Windows
-        if (!isWindows()) {
-            return text;
-        }
-
-        // Detect if text contains mojibake patterns (corrupted UTF-8)
-        // If it does, try to repair it by re-encoding
-        if (containsMojibake(text)) {
-            try {
-                // Try to fix mojibake by re-encoding:
-                // 1. Get bytes as if text was incorrectly decoded as ISO-8859-1
-                byte[] bytes = text.getBytes(StandardCharsets.ISO_8859_1);
-                // 2. Re-decode as UTF-8 (the original intended encoding)
-                return new String(bytes, StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                // If repair fails, return original text
-                return text;
-            }
-        }
-
-        // No mojibake detected, return as-is
-        return text;
-    }
-
-    /**
-     * Detects if text contains mojibake (corrupted UTF-8 sequences).
-     * 
-     * This method checks for common mojibake patterns that occur when UTF-8 characters
-     * are incorrectly interpreted as Windows-1252 or ISO-8859-1.
-     * 
-     * @param text the text to check
-     * @return true if mojibake patterns are detected
-     */
-    private static boolean containsMojibake(String text) {
-        if (text == null || text.isEmpty()) {
-            return false;
-        }
+        String cleaned = text;
         
-        // Check for common mojibake patterns
-        // These are UTF-8 box-drawing characters incorrectly decoded as Windows-1252/ISO-8859-1
-        return text.contains("ΓòÉ") ||  // corrupted ═ (U+2550)
-               text.contains("ΓöÇ") ||  // corrupted ─ (U+2500)
-               text.contains("Γû¬") ||  // corrupted ▪ (U+25AA)
-               text.contains("Γöé") ||  // corrupted │ (U+2502)
-               text.contains("ΓöÇΓöÇ") || // multiple corrupted ─
-               text.contains("ΓòÉΓòÉ");  // multiple corrupted ═
+        // Replace common mojibake patterns from box-drawing characters
+        // These occur when UTF-8 bytes are interpreted as Windows-1252/Latin-1
+        cleaned = cleaned.replace("ΓòÉ", "═");  // Box Drawings Double Horizontal (U+2550)
+        cleaned = cleaned.replace("ΓöÇ", "─");  // Box Drawings Light Horizontal (U+2500)
+        cleaned = cleaned.replace("Γû¬", "▪");  // Black Small Square (U+25AA)
+        cleaned = cleaned.replace("Γöé", "│");  // Box Drawings Light Vertical (U+2502)
+        
+        // Replace common mojibake patterns from punctuation
+        // Note: Using escape sequences to avoid compilation issues with UTF-8 characters in source
+        cleaned = cleaned.replace("\u00E2\u0080\u009C", "\""); // Left double quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u009D", "\""); // Right double quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0098", "'");  // Left single quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0099", "'");  // Right single quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0093", "-");  // En dash mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0094", "-");  // Em dash mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u00A6", "..."); // Ellipsis mojibake
+        
+        // Additional common patterns
+        cleaned = cleaned.replace("\u00C2", "");     // Stray non-breaking space marker
+        cleaned = cleaned.replace("\u00C3\u00A9", "e");  // e with acute
+        cleaned = cleaned.replace("\u00C3\u00A8", "e");  // e with grave
+        cleaned = cleaned.replace("\u00C3\u00A0", "a");  // a with grave
+        
+        // Remove control characters except newlines and tabs
+        cleaned = cleaned.replaceAll("[\\p{Cntrl}&&[^\n\t\r]]", "");
+        
+        return cleaned.trim();
     }
 
     /**
@@ -151,38 +136,23 @@ public class EncodingHelper {
             // Step 2: For Windows, set console code page to UTF-8 (65001)
             if (isWindows()) {
                 setupUTF8Output();
-            }
-            
-            // Step 3: Reconfigure System.out and System.err with UTF-8 encoding
-            // Use PrintStream with explicit UTF-8 charset for compatibility with GitBash
-            // Important: charset parameter is only available in Java 10+
-            try {
-                // Try Java 10+ constructor with Charset parameter
-                System.setOut(new java.io.PrintStream(System.out, true, StandardCharsets.UTF_8));
-                System.setErr(new java.io.PrintStream(System.err, true, StandardCharsets.UTF_8));
-            } catch (Exception e) {
-                // Fallback for older Java or if above fails
-                // Wrap the output streams with UTF-8 OutputStreamWriter
-                System.setOut(new java.io.PrintStream(
-                    new java.io.BufferedOutputStream(
-                        new java.io.FileOutputStream(java.io.FileDescriptor.out), 
-                        128
-                    ),
-                    true,  // autoFlush
-                    StandardCharsets.UTF_8.name()
-                ));
                 
-                System.setErr(new java.io.PrintStream(
-                    new java.io.BufferedOutputStream(
-                        new java.io.FileOutputStream(java.io.FileDescriptor.err),
-                        128
-                    ),
-                    true,  // autoFlush
-                    StandardCharsets.UTF_8.name()
-                ));
+                // Additional Windows-specific properties
+                System.setProperty("sun.stdout.encoding", "UTF-8");
+                System.setProperty("sun.stderr.encoding", "UTF-8");
             }
             
-            // Step 4: Configure java.util.logging to use UTF-8
+            // Step 3: Flush existing buffers before reconfiguration
+            System.out.flush();
+            System.err.flush();
+            
+            // Step 4: Wrap existing System.out and System.err with UTF-8 PrintStreams
+            // CRITICAL: Wrap existing streams, don't replace them
+            // This approach is compatible with Java 10+ and works in GitBash
+            System.setOut(new java.io.PrintStream(System.out, true, StandardCharsets.UTF_8));
+            System.setErr(new java.io.PrintStream(System.err, true, StandardCharsets.UTF_8));
+            
+            // Step 5: Configure java.util.logging to use UTF-8
             try {
                 java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
                 java.util.logging.Handler[] handlers = rootLogger.getHandlers();
