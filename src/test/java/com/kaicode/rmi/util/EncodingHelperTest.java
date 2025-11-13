@@ -290,12 +290,14 @@ class EncodingHelperTest {
 
     @Test
     @EnabledOnOs({OS.LINUX, OS.MAC})
-    void shouldNotModifyTextOnNonWindows() {
-        // On non-Windows platforms, cleanTextForWindows should return text unchanged
+    void shouldCleanMojibakeOnAllPlatforms() {
+        // cleanTextForWindows() should fix mojibake on ALL platforms, not just Windows
+        // The name is misleading - it fixes Windows-specific mojibake patterns regardless of OS
         String text = "ΓòÉΓöÇΓû¬ Some text";
         String result = EncodingHelper.cleanTextForWindows(text);
         
-        assertThat(result).isEqualTo(text);
+        // Should fix mojibake even on Linux/Mac
+        assertThat(result).isEqualTo("═─▪ Some text");
     }
 
     @Test
