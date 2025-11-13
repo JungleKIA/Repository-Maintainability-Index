@@ -274,21 +274,35 @@ public class LLMAnalyzer {
     private LLMAnalysis.ReadmeAnalysis parseReadmeAnalysis(String content) {
         try {
             JsonObject json = gson.fromJson(content, JsonObject.class);
+            
+            // Clean text from mojibake in strengths and suggestions
+            List<String> cleanedStrengths = jsonArrayToList(json.getAsJsonArray("strengths"))
+                    .stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(Collectors.toList());
+            
+            List<String> cleanedSuggestions = jsonArrayToList(json.getAsJsonArray("suggestions"))
+                    .stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(Collectors.toList());
+            
             return new LLMAnalysis.ReadmeAnalysis(
                     json.get("clarity").getAsInt(),
                     json.get("completeness").getAsInt(),
                     json.get("newcomerFriendly").getAsInt(),
-                    jsonArrayToList(json.getAsJsonArray("strengths")),
-                    jsonArrayToList(json.getAsJsonArray("suggestions"))
+                    cleanedStrengths,
+                    cleanedSuggestions
             );
         } catch (Exception e) {
             logger.warn("Failed to parse README analysis, using defaults: {}", e.getMessage());
+            // Clean fallback values as well
             return new LLMAnalysis.ReadmeAnalysis(
                     7, 5, 6,
-                    List.of("Well-structured sections with clear headings", 
-                            "Comprehensive links to external resources"),
-                    List.of("Add a Quick Start section", "Include prerequisites", 
-                            "Add usage examples")
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Well-structured sections with clear headings"), 
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Comprehensive links to external resources")),
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Add a Quick Start section"), 
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Include prerequisites"), 
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Add usage examples"))
             );
         }
     }
@@ -296,21 +310,29 @@ public class LLMAnalyzer {
     private LLMAnalysis.CommitAnalysis parseCommitAnalysis(String content) {
         try {
             JsonObject json = gson.fromJson(content, JsonObject.class);
+            
+            // Clean text from mojibake in patterns
+            List<String> cleanedPatterns = jsonArrayToList(json.getAsJsonArray("patterns"))
+                    .stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(Collectors.toList());
+            
             return new LLMAnalysis.CommitAnalysis(
                     json.get("clarity").getAsInt(),
                     json.get("consistency").getAsInt(),
                     json.get("informativeness").getAsInt(),
-                    jsonArrayToList(json.getAsJsonArray("patterns"))
+                    cleanedPatterns
             );
         } catch (Exception e) {
             logger.warn("Failed to parse commit analysis, using defaults: {}", e.getMessage());
+            // Clean fallback values as well
             return new LLMAnalysis.CommitAnalysis(
                     8, 6, 7,
                     List.of(
-                            "Positive: Most messages use short, imperative-style subject lines",
-                            "Positive: Issue numbers are frequently referenced",
-                            "Negative: Capitalization and punctuation are inconsistent",
-                            "Negative: Some messages are too vague")
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Positive: Most messages use short, imperative-style subject lines"),
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Positive: Issue numbers are frequently referenced"),
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Negative: Capitalization and punctuation are inconsistent"),
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Negative: Some messages are too vague"))
             );
         }
     }
@@ -318,22 +340,35 @@ public class LLMAnalyzer {
     private LLMAnalysis.CommunityAnalysis parseCommunityAnalysis(String content) {
         try {
             JsonObject json = gson.fromJson(content, JsonObject.class);
+            
+            // Clean text from mojibake in strengths and suggestions
+            List<String> cleanedStrengths = jsonArrayToList(json.getAsJsonArray("strengths"))
+                    .stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(Collectors.toList());
+            
+            List<String> cleanedSuggestions = jsonArrayToList(json.getAsJsonArray("suggestions"))
+                    .stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(Collectors.toList());
+            
             return new LLMAnalysis.CommunityAnalysis(
                     json.get("responsiveness").getAsInt(),
                     json.get("helpfulness").getAsInt(),
                     json.get("tone").getAsInt(),
-                    jsonArrayToList(json.getAsJsonArray("strengths")),
-                    jsonArrayToList(json.getAsJsonArray("suggestions"))
+                    cleanedStrengths,
+                    cleanedSuggestions
             );
         } catch (Exception e) {
             logger.warn("Failed to parse community analysis, using defaults: {}", e.getMessage());
+            // Clean fallback values as well
             return new LLMAnalysis.CommunityAnalysis(
                     3, 3, 4,
-                    List.of("High volume of issues indicates active community", 
-                            "Wide range of topics shows diverse participation"),
-                    List.of("Increase speed of initial triage", 
-                            "Provide more detailed responses",
-                            "Implement status badges for issues")
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("High volume of issues indicates active community"), 
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Wide range of topics shows diverse participation")),
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Increase speed of initial triage"), 
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Provide more detailed responses"),
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Implement status badges for issues"))
             );
         }
     }

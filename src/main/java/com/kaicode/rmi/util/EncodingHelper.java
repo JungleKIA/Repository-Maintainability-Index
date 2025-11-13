@@ -52,6 +52,7 @@ public class EncodingHelper {
         cleaned = cleaned.replace("ΓöÇ", "─");  // Box Drawings Light Horizontal (U+2500)
         cleaned = cleaned.replace("Γû¬", "▪");  // Black Small Square (U+25AA)
         cleaned = cleaned.replace("Γöé", "│");  // Box Drawings Light Vertical (U+2502)
+        cleaned = cleaned.replace("ΓöÇΓöÇΓöÇ", "───");  // Multiple dashes
         
         // Replace common mojibake patterns from punctuation
         // Note: Using escape sequences to avoid compilation issues with UTF-8 characters in source
@@ -62,6 +63,10 @@ public class EncodingHelper {
         cleaned = cleaned.replace("\u00E2\u0080\u0093", "-");  // En dash mojibake
         cleaned = cleaned.replace("\u00E2\u0080\u0094", "-");  // Em dash mojibake
         cleaned = cleaned.replace("\u00E2\u0080\u00A6", "..."); // Ellipsis mojibake
+        
+        // Additional dash variants from real-world Git Bash issues
+        cleaned = cleaned.replace("ΓÇæ", "-");  // Dash variant (common in LLM responses)
+        cleaned = cleaned.replace("ΓÇô", "-");  // Dash variant (common in LLM responses)
         
         // Additional common patterns
         cleaned = cleaned.replace("\u00C2", "");     // Stray non-breaking space marker

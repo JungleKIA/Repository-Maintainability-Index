@@ -26,6 +26,7 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # IDE
+.kiro/
 .idea/
 *.iml
 *.ipr
@@ -56,3 +57,6 @@ Thumbs.db
 *_key.txt
 secrets.txt
 api_keys.txt
+
+# Nested repository
+Repository-Maintainability-Index/

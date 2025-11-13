@@ -366,4 +366,140 @@ class EncodingHelperTest {
         // Should handle mixed content
         assertThat(result).isNotNull();
     }
+
+    // ========== NEW TESTS FOR ADDITIONAL MOJIBAKE PATTERNS ==========
+
+    @Test
+    void shouldCleanNewBoxDrawingCharacters() {
+        // Test all box-drawing character replacements
+        assertThat(EncodingHelper.cleanTextForWindows("ΓòÉΓòÉΓòÉ")).isEqualTo("═══");
+        assertThat(EncodingHelper.cleanTextForWindows("ΓöÇΓöÇΓöÇ")).isEqualTo("───");
+        assertThat(EncodingHelper.cleanTextForWindows("Γû¬ Item")).isEqualTo("▪ Item");
+        assertThat(EncodingHelper.cleanTextForWindows("Γöé Column")).isEqualTo("│ Column");
+    }
+
+    @Test
+    void shouldCleanNewMultipleDashes() {
+        // Test multiple dash pattern
+        String input = "ΓöÇΓöÇΓöÇ Separator ΓöÇΓöÇΓöÇ";
+        String expected = "─── Separator ───";
+        assertThat(EncodingHelper.cleanTextForWindows(input)).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldCleanNewDashVariants() {
+        // Test additional dash variants from real-world Git Bash issues
+        assertThat(EncodingHelper.cleanTextForWindows("firstΓÇæresponse time")).isEqualTo("first-response time");
+        assertThat(EncodingHelper.cleanTextForWindows("24ΓÇô48 hours")).isEqualTo("24-48 hours");
+    }
+
+    @Test
+    void shouldCleanNewRealWorldExamples() {
+        // Test real-world examples from Git Bash
+        String input1 = "firstΓÇæresponse time 24ΓÇô48 hours";
+        String expected1 = "first-response time 24-48 hours";
+        assertThat(EncodingHelper.cleanTextForWindows(input1)).isEqualTo(expected1);
+    }
+
+    @Test
+    void shouldBeIdempotentNew() {
+        // Test that repeated cleaning produces the same result
+        String text = "Clean text with no mojibake";
+        String cleaned1 = EncodingHelper.cleanTextForWindows(text);
+        String cleaned2 = EncodingHelper.cleanTextForWindows(cleaned1);
+        String cleaned3 = EncodingHelper.cleanTextForWindows(cleaned2);
+
+        assertThat(cleaned1).isEqualTo(text);
+        assertThat(cleaned2).isEqualTo(cleaned1);
+        assertThat(cleaned3).isEqualTo(cleaned2);
+    }
+
+    @Test
+    void shouldBeIdempotentWithMojibakeNew() {
+        // Test that cleaning mojibake twice produces the same result
+        String textWithMojibake = "ΓòÉΓòÉ Header ΓöÇΓöÇ Text";
+        String cleaned1 = EncodingHelper.cleanTextForWindows(textWithMojibake);
+        String cleaned2 = EncodingHelper.cleanTextForWindows(cleaned1);
+
+        assertThat(cleaned1).isEqualTo(cleaned2);
+    }
+
+    @Test
+    void shouldHandleNewNullInput() {
+        // Test null handling
+        assertThat(EncodingHelper.cleanTextForWindows(null)).isEmpty();
+    }
+
+    @Test
+    void shouldHandleNewEmptyInput() {
+        // Test empty string handling
+        assertThat(EncodingHelper.cleanTextForWindows("")).isEmpty();
+    }
+
+    @Test
+    void shouldHandleNewWhitespaceOnlyInput() {
+        // Test whitespace-only string handling (should be trimmed)
+        assertThat(EncodingHelper.cleanTextForWindows("   ")).isEmpty();
+        assertThat(EncodingHelper.cleanTextForWindows("\t\n  ")).isEmpty();
+    }
+
+    @Test
+    void shouldPreserveNewNewlinesAndTabs() {
+        // Test that newlines and tabs are preserved
+        String text = "Line1\nLine2\tTabbed\rCarriage";
+        String result = EncodingHelper.cleanTextForWindows(text);
+
+        assertThat(result).contains("\n");
+        assertThat(result).contains("\t");
+        assertThat(result).contains("\r");
+    }
+
+    @Test
+    void shouldRemoveNewControlCharacters() {
+        // Test that control characters (except \n, \t, \r) are removed
+        String textWithControl = "Text\u0000with\u0001control\u0002chars";
+        String result = EncodingHelper.cleanTextForWindows(textWithControl);
+
+        assertThat(result).doesNotContain("\u0000", "\u0001", "\u0002");
+        assertThat(result).contains("Text", "with", "control", "chars");
+    }
+
+    @Test
+    void shouldHandleNewComplexMojibakeScenario() {
+        // Test complex scenario with multiple mojibake patterns
+        String complex = "ΓòÉΓòÉΓòÉ Repository Maintainability Index Report ΓòÉΓòÉΓòÉ\n" +
+                "Repository: facebook/react\n" +
+                "Overall Score: 87.50/100\n" +
+                "Rating: \"GOOD\"\n" +
+                "ΓöÇΓöÇΓöÇ Detailed Metrics ΓöÇΓöÇΓöÇ\n" +
+                "Γû¬ Documentation: 100.00/100 (weight: 20%)\n" +
+                "  Evaluates the presence of essential documentation files\n" +
+                "  Details: Found: README.md, CONTRIBUTING.md, LICENSE...";
+
+        String result = EncodingHelper.cleanTextForWindows(complex);
+
+        // Verify mojibake is cleaned
+        assertThat(result).doesNotContain("ΓòÉ", "ΓöÇ", "Γû¬");
+        assertThat(result).contains("═", "─", "▪");
+        assertThat(result).contains("Repository Maintainability Index Report");
+        assertThat(result).contains("facebook/react");
+    }
+
+    @Test
+    void shouldHandleNewLLMResponseMojibake() {
+        // Test typical LLM response with mojibake
+        String llmResponse = "Well-structured sections with clear headings (Contributing, Development Container, License)\n" +
+                "Comprehensive links to external resources (issues, pull requests, documentation...)\n" +
+                "Add a **Quick Start** or **Installation** section that explains how to get the project running locally\n" +
+                "Increase the frequency and speed of maintainer responses; many issues currently show no reply or followΓÇæup.\n" +
+                "Provide clearer guidelines for issue reporting and PR submission to reduce confusion and improve quality of contributions.";
+
+        String result = EncodingHelper.cleanTextForWindows(llmResponse);
+
+        // Verify all mojibake is cleaned
+        assertThat(result).doesNotContain("ΓÇæ");
+        assertThat(result).contains("Well-structured");
+        assertThat(result).contains("documentation");
+        assertThat(result).contains("follow-up");
+    }
 }
