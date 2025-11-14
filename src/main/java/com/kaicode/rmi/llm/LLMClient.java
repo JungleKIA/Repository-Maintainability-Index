@@ -87,8 +87,8 @@ public class LLMClient {
                     .get("content")
                     .getAsString();
 
-            // Clean text from mojibake artifacts before returning
-            String cleanedContent = com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows(content);
+            // Note: Text cleaning is done in LLMAnalyzer after JSON parsing
+            // to avoid breaking JSON structure
 
             int tokensUsed = 0;
             if (jsonResponse.has("usage")) {
@@ -97,7 +97,7 @@ public class LLMClient {
                         .getAsInt();
             }
 
-            return new LLMResponse(cleanedContent, tokensUsed);
+            return new LLMResponse(content, tokensUsed);
         }
     }
 

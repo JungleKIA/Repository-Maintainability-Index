@@ -99,8 +99,9 @@ class LLMClientTest {
     // ========== NEW TESTS FOR TEXT CLEANING ==========
 
     @Test
-    void shouldCleanMojibakeFromResponse() throws Exception {
+    void shouldReturnRawContentWithMojibake() throws Exception {
         // Mock API response with mojibake patterns
+        // Note: LLMClient returns raw content; cleaning happens in LLMAnalyzer
         String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"Well-structured sections with ΓöÇΓöÇΓöÇ separators\"}}],\"usage\":{\"total_tokens\":50}}";
 
         mockServer.enqueue(new MockResponse()
@@ -110,13 +111,13 @@ class LLMClientTest {
 
         LLMClient.LLMResponse response = client.analyze("Test prompt");
 
-        // Verify mojibake is cleaned
-        assertThat(response.getContent()).doesNotContain("ΓöÇ");
-        assertThat(response.getContent()).contains("Well-structured", "───");
+        // Verify content is returned as-is (mojibake not cleaned at this level)
+        assertThat(response.getContent()).contains("ΓöÇΓöÇΓöÇ");
+        assertThat(response.getContent()).contains("Well-structured");
     }
 
     @Test
-    void shouldCleanBoxDrawingCharacterMojibake() throws Exception {
+    void shouldReturnBoxDrawingCharacterMojibake() throws Exception {
         String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"ΓòÉΓòÉΓòÉ Header ΓòÉΓòÉΓòÉ\"}}],\"usage\":{\"total_tokens\":30}}";
 
         mockServer.enqueue(new MockResponse()
@@ -125,13 +126,13 @@ class LLMClientTest {
 
         LLMClient.LLMResponse response = client.analyze("Test");
 
-        // Verify box-drawing mojibake is cleaned
-        assertThat(response.getContent()).doesNotContain("ΓòÉ");
-        assertThat(response.getContent()).contains("═══");
+        // Verify content is returned as-is
+        assertThat(response.getContent()).contains("ΓòÉ");
+        assertThat(response.getContent()).contains("Header");
     }
 
     @Test
-    void shouldCleanDashVariantMojibake() throws Exception {
+    void shouldReturnDashVariantMojibake() throws Exception {
         String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"firstΓÇæresponse time 24ΓÇô48 hours\"}}],\"usage\":{\"total_tokens\":40}}";
 
         mockServer.enqueue(new MockResponse()
@@ -140,13 +141,13 @@ class LLMClientTest {
 
         LLMClient.LLMResponse response = client.analyze("Test");
 
-        // Verify dash variant mojibake is cleaned
-        assertThat(response.getContent()).doesNotContain("ΓÇæ", "ΓÇô");
-        assertThat(response.getContent()).isEqualTo("first-response time 24-48 hours");
+        // Verify content is returned as-is
+        assertThat(response.getContent()).contains("ΓÇæ", "ΓÇô");
+        assertThat(response.getContent()).isEqualTo("firstΓÇæresponse time 24ΓÇô48 hours");
     }
 
     @Test
-    void shouldCleanMultipleMojibakePatterns() throws Exception {
+    void shouldReturnMultipleMojibakePatterns() throws Exception {
         String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"ΓòÉΓòÉ Header ΓöÇΓöÇ Text Γû¬ Bullet firstΓÇæresponse\"}}],\"usage\":{\"total_tokens\":60}}";
 
         mockServer.enqueue(new MockResponse()
@@ -155,9 +156,9 @@ class LLMClientTest {
 
         LLMClient.LLMResponse response = client.analyze("Test");
 
-        // Verify all mojibake patterns are cleaned
-        assertThat(response.getContent()).doesNotContain("ΓòÉ", "ΓöÇ", "Γû¬", "ΓÇæ");
-        assertThat(response.getContent()).contains("═", "─", "▪", "-");
+        // Verify content is returned as-is with all mojibake patterns
+        assertThat(response.getContent()).contains("ΓòÉ", "ΓöÇ", "Γû¬", "ΓÇæ");
+        assertThat(response.getContent()).contains("Header", "Text", "Bullet");
     }
 
     @Test
@@ -211,7 +212,7 @@ class LLMClientTest {
     }
 
     @Test
-    void shouldCleanComplexLLMResponse() throws Exception {
+    void shouldReturnComplexLLMResponse() throws Exception {
         String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"Well-structured sections with clear headings\\nComprehensive links to external resources\\nIncrease the frequency and speed of maintainer responses; many issues currently show no reply or followΓÇæup.\"}}],\"usage\":{\"total_tokens\":100}}";
 
         mockServer.enqueue(new MockResponse()
@@ -220,8 +221,8 @@ class LLMClientTest {
 
         LLMClient.LLMResponse response = client.analyze("Test");
 
-        // Verify complex mojibake is cleaned
-        assertThat(response.getContent()).doesNotContain("ΓÇæ");
-        assertThat(response.getContent()).contains("Well-structured", "follow-up");
+        // Verify content is returned as-is
+        assertThat(response.getContent()).contains("ΓÇæ");
+        assertThat(response.getContent()).contains("Well-structured", "follow");
     }
 }

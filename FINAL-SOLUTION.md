@@ -1,56 +1,56 @@
-# Финальное решение проблемы Unicode в GitBash на Windows
+# Final solution for Unicode problem in GitBash on Windows
 
-## Что было сделано
+## What was done
 
-После изучения детального руководства из другого проекта, я полностью переработал подход к решению проблемы.
+After studying a detailed guide from another project, I completely reworked the approach to solving the problem.
 
-### Ключевые изменения
+### Key changes
 
-1. **Правильное обертывание потоков** (`EncodingHelper.setupUTF8ConsoleStreams()`):
+1. **Correct stream wrapping** (`EncodingHelper.setupUTF8ConsoleStreams()`):
    ```java
-   // Обертываем СУЩЕСТВУЮЩИЙ System.out, а НЕ создаем новый
+   // Wrapping EXISTING System.out, NOT creating new one
    System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
    System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
    ```
 
-2. **Реализация cleanTextForWindows()** для исправления mojibake:
+2. **Implementation of cleanTextForWindows()** to fix mojibake:
    ```java
-   // Исправляем УЖЕ ПОВРЕЖДЕННЫЕ символы
+   // Fixing ALREADY CORRUPTED characters
    cleaned = cleaned.replace("ΓòÉ", "═");  // Box Double Horizontal
    cleaned = cleaned.replace("ΓöÇ", "─");  // Box Light Horizontal
    cleaned = cleaned.replace("Γû¬", "▪");  // Black Small Square
    cleaned = cleaned.replace("Γöé", "│");  // Box Light Vertical
    ```
 
-3. **Применение очистки в форматтерах**:
-   - `ReportFormatter.formatText()` - вызывает `EncodingHelper.cleanTextForWindows()`
-   - `LLMReportFormatter.formatWithLLM()` - вызывает `EncodingHelper.cleanTextForWindows()`
+3. **Applying cleaning in formatters**:
+   - `ReportFormatter.formatText()` - calls `EncodingHelper.cleanTextForWindows()`
+   - `LLMReportFormatter.formatWithLLM()` - calls `EncodingHelper.cleanTextForWindows()`
 
-4. **Упразднение UTF8Console** - класс больше не нужен, используем обычный `System.out.println()`
+4. **Deprecating UTF8Console** - class no longer needed, using regular `System.out.println()`
 
-## Почему это работает
+## Why this works
 
-### Проблема была в понимании
+### Problem was in understanding
 
-Я пытался **ПРЕДОТВРАТИТЬ** повреждение символов при выводе, но проблема в том, что:
-- Java генерирует правильные UTF-8 байты
-- GitBash **УЖЕ ПОЛУЧАЕТ** эти байты искаженными (интерпретирует UTF-8 как Latin-1/Windows-1252)
-- Нужно **ИСПРАВЛЯТЬ** уже поврежденный текст, а не пытаться предотвратить повреждение
+I was trying to **PREVENT** character corruption during output, but the problem is that:
+- Java generates correct UTF-8 bytes
+- GitBash **ALREADY RECEIVES** these bytes corrupted (interprets UTF-8 as Latin-1/Windows-1252)
+- Need to **FIX** already corrupted text, not try to prevent corruption
 
-### Как работает mojibake
+### How mojibake works
 
-Когда UTF-8 байты интерпретируются как Latin-1/Windows-1252:
+When UTF-8 bytes are interpreted as Latin-1/Windows-1252:
 
-| Символ | UTF-8 байты | Интерпретация как Latin-1 | Отображается |
-|--------|-------------|---------------------------|--------------|
+| Character | UTF-8 bytes | Interpretation as Latin-1 | Displayed |
+|-----------|-------------|---------------------------|-----------|
 | `═` (U+2550) | E2 95 90 | Γ(C3) ò(95) É(90) | `ΓòÉ` |
 | `─` (U+2500) | E2 94 80 | Γ(C3) ö(94) Ç(80) | `ΓöÇ` |
 | `▪` (U+25AA) | E2 96 AA | Γ(C3) û(96) ¬(AA) | `Γû¬` |
 | `│` (U+2502) | E2 94 82 | Γ(C3) ö(94) é(82) | `Γöé` |
 
-### Решение
+### Solution
 
-**cleanTextForWindows()** делает обратную замену:
+**cleanTextForWindows()** does reverse replacement:
 ```
 ΓòÉ → ═
 ΓöÇ → ─
@@ -58,103 +58,103 @@
 Γöé → │
 ```
 
-## Как протестировать
+## How to test
 
-### 1. Пересоберите проект
+### 1. Rebuild project
 
 ```bash
 mvn clean package
 ```
 
-### 2. Запустите в GitBash
+### 2. Run in GitBash
 
 ```bash
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-### 3. Проверьте результат
+### 3. Check result
 
-**Ожидаемый вывод:**
+**Expected output:**
 ```
-═══════════════════════════════════════════════════════════════
-  Repository Maintainability Index Report
-═══════════════════════════════════════════════════════════════
+══════════════════════════════
+ Repository Maintainability Index Report
+══════════════════════════
 
-───────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────
   Detailed Metrics
-───────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────
 
 ▪ Documentation: 80.00/100
 ```
 
-## Что НЕ работало (и почему)
+## What did NOT work (and why)
 
-### ❌ Попытка 1: Прямая запись байтов (`System.out.write(byte[])`)
-**Проблема**: Git Bash все равно интерпретирует байты как Latin-1, даже если мы пишем правильные UTF-8 байты
+### ❌ Attempt 1: Direct byte writing (`System.out.write(byte[])`)
+**Problem**: Git Bash still interprets bytes as Latin-1, even if we write correct UTF-8 bytes
 
-### ❌ Попытка 2: Замена System.out через FileDescriptor
-**Проблема**: Не решает проблему интерпретации в GitBash
+### ❌ Attempt 2: Replacing System.out via FileDescriptor
+**Problem**: Doesn't solve interpretation problem in GitBash
 
-### ❌ Попытка 3: cleanTextForWindows() на правильном тексте
-**Проблема**: Пытались исправить то, что еще не было сломано. Текст ломается ПОСЛЕ вывода в GitBash.
+### ❌ Attempt 3: cleanTextForWindows() on correct text
+**Problem**: Trying to fix something that wasn't broken yet. Text breaks AFTER output to GitBash.
 
-## Правильный подход ✅
+## Correct approach ✅
 
-1. **Настройка потоков** - обертываем System.out с UTF-8 (может помочь, но не полностью решает)
-2. **Детекция повреждений** - cleanTextForWindows() находит паттерны mojibake
-3. **Исправление** - заменяет поврежденные последовательности на правильные символы
-4. **Применение** - вызывается в форматтерах ПЕРЕД выводом
+1. **Stream setup** - wrap System.out with UTF-8 (may help, but doesn't fully solve)
+2. **Damage detection** - cleanTextForWindows() finds mojibake patterns
+3. **Fixing** - replaces corrupted sequences with correct characters
+4. **Application** - called in formatters BEFORE output
 
-## Файлы изменены
+## Files changed
 
-### Основные изменения:
+### Main changes:
 - `src/main/java/com/kaicode/rmi/util/EncodingHelper.java`
-  - Переработан `cleanTextForWindows()` - теперь делает реальные замены mojibake паттернов
-  - Улучшен `setupUTF8ConsoleStreams()` - обертывает существующий System.out
+  - Reworked `cleanTextForWindows()` - now does real mojibake pattern replacements
+  - Improved `setupUTF8ConsoleStreams()` - wraps existing System.out
 
 - `src/main/java/com/kaicode/rmi/util/ReportFormatter.java`
-  - Применяет `cleanTextForWindows()` к результату форматирования
+  - Applies `cleanTextForWindows()` to formatting result
 
 - `src/main/java/com/kaicode/rmi/util/LLMReportFormatter.java`
-  - Применяет `cleanTextForWindows()` к результату форматирования
+  - Applies `cleanTextForWindows()` to formatting result
 
-### Упразднено:
-- `src/main/java/com/kaicode/rmi/util/UTF8Console.java` - помечен как @Deprecated
-- Больше не используется в `AnalyzeCommand`
-- Больше не инициализируется в `Main`
+### Deprecated:
+- `src/main/java/com/kaicode/rmi/util/UTF8Console.java` - marked as @Deprecated
+- No longer used in `AnalyzeCommand`
+- No longer initialized in `Main`
 
-## Важные замечания
+## Important notes
 
-1. **cleanTextForWindows() работает для всех платформ** - на Linux/macOS просто ничего не находит для замены
-2. **Не нужно проверять OS** - замены безопасны на любой платформе
-3. **Порядок замен важен** - сначала box-drawing символы, потом punctuation
-4. **Используются escape sequences** - чтобы избежать проблем компиляции Java
+1. **cleanTextForWindows() works on all platforms** - on Linux/macOS just finds nothing to replace
+2. **No need to check OS** - replacements are safe on any platform
+3. **Replacement order matters** - first box-drawing characters, then punctuation
+4. **Using escape sequences** - to avoid Java compilation problems
 
-## Следующие шаги
+## Next steps
 
-1. ✅ Проект собирается успешно
-2. ⏳ **ТЕСТИРОВАНИЕ** - запустите на Windows/GitBash и проверьте результат
-3. ⏳ Если работает - отлично!
-4. ⏳ Если не работает - сообщите какие именно символы остались искаженными
+1. ✅ Project builds successfully
+2. ⏳ **TESTING** - run on Windows/GitBash and check result
+3. ⏳ If it works - great!
+4. ⏳ If doesn't work - report which characters remain corrupted
 
-## Дополнительная настройка (если нужна)
+## Additional setup (if needed)
 
-Если после применения исправления символы все еще отображаются неправильно:
+If after applying fix characters still display incorrectly:
 
-### 1. Настройте локаль GitBash
+### 1. Configure GitBash locale
 ```bash
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 ```
 
-### 2. Настройте шрифт GitBash
-- Options → Text → Font → Cascadia Code или Consolas
+### 2. Configure GitBash font
+- Options → Text → Font → Cascadia Code or Consolas
 - Options → Text → Character set → UTF-8
 
-### 3. Используйте Windows Terminal
-- Лучшая поддержка UTF-8 из коробки
-- Установите из Microsoft Store
+### 3. Use Windows Terminal
+- Better UTF-8 support out of the box
+- Install from Microsoft Store
 
 ---
 
-**Этот подход основан на проверенном решении из реального production-проекта и должен надежно работать.**
+**This approach is based on proven solution from real production project and should work reliably.**

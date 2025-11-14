@@ -1,91 +1,91 @@
 # UTF-8 Unicode Fix Applied
 
-## Проблема / Problem
+## Problem
 
-В предыдущей версии Unicode символы не отображались корректно в GitBash на Windows.
+In the previous version, Unicode characters were not displayed correctly in GitBash on Windows.
 
-## Решение / Solution
+## Solution
 
-**Создан новый класс `UTF8Console`** который обеспечивает надежный вывод UTF-8 текста.
+**Created new `UTF8Console` class** that provides reliable UTF-8 text output.
 
-### Как это работает
+### How it works
 
-1. **UTF8Console** - новый класс-обертка для вывода текста
-   - Использует `OutputStreamWriter` с явным указанием `StandardCharsets.UTF_8`
-   - Включен autoFlush для правильной обработки многобайтовых последовательностей
-   - Оборачивает `System.out` и `System.err`
+1. **UTF8Console** - new wrapper class for text output
+   - Uses `OutputStreamWriter` with explicit `StandardCharsets.UTF_8`
+   - AutoFlush enabled for correct handling of multibyte sequences
+   - Wraps `System.out` and `System.err`
 
-2. **Инициализация в Main.main()**
+2. **Initialization in Main.main()**
    ```java
    UTF8Console.initialize();
    ```
 
-3. **Использование в AnalyzeCommand**
+3. **Usage in AnalyzeCommand**
    ```java
-   // Вместо System.out.println(output)
+   // Instead of System.out.println(output)
    UTF8Console.println(output);
    ```
 
-### Что изменилось
+### What changed
 
-#### Новые файлы:
-- `src/main/java/com/kaicode/rmi/util/UTF8Console.java` - класс для UTF-8 вывода
-- `src/test/java/com/kaicode/rmi/util/UTF8Console Test.java` - тесты (11 тестов)
+#### New files:
+- `src/main/java/com/kaicode/rmi/util/UTF8Console.java` - class for UTF-8 output
+- `src/test/java/com/kaicode/rmi/util/UTF8ConsoleTest.java` - tests (11 tests)
 
-#### Измененные файлы:
-- `src/main/java/com/kaicode/rmi/Main.java` - добавлена инициализация UTF8Console
-- `src/main/java/com/kaicode/rmi/cli/AnalyzeCommand.java` - использует UTF8Console для вывода отчетов
-- `src/main/java/com/kaicode/rmi/util/EncodingHelper.java` - улучшена настройка кодировки
-- `src/main/java/com/kaicode/rmi/util/ReportFormatter.java` - убран неработающий cleanTextForWindows()
-- `src/main/java/com/kaicode/rmi/util/LLMReportFormatter.java` - убран неработающий cleanTextForWindows()
-- `pom.xml` - скорректированы пороги покрытия (instruction: 89%, branch: 77%)
+#### Modified files:
+- `src/main/java/com/kaicode/rmi/Main.java` - added UTF8Console initialization
+- `src/main/java/com/kaicode/rmi/cli/AnalyzeCommand.java` - uses UTF8Console for report output
+- `src/main/java/com/kaicode/rmi/util/EncodingHelper.java` - improved encoding setup
+- `src/main/java/com/kaicode/rmi/util/ReportFormatter.java` - removed non-working cleanTextForWindows()
+- `src/main/java/com/kaicode/rmi/util/LLMReportFormatter.java` - removed non-working cleanTextForWindows()
+- `pom.xml` - adjusted coverage thresholds (instruction: 89%, branch: 77%)
 
-## Как собрать / How to Build
+## How to Build
 
 ```bash
 mvn clean package
 ```
 
-## Как использовать / How to Use
+## How to Use
 
 ```bash
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-**Важно:** Убедитесь что в GitBash установлен UTF-8 шрифт (Cascadia Code, Consolas, или JetBrains Mono).
+**Important:** Make sure GitBash has UTF-8 font installed (Cascadia Code, Consolas, or JetBrains Mono).
 
-### Настройка GitBash (если нужна)
+### GitBash Setup (if needed)
 
-1. Правый клик на заголовок окна GitBash → **Options**
-2. **Text** → **Font**: выберите **Cascadia Code** или **Consolas**
+1. Right-click on GitBash window header → **Options**
+2. **Text** → **Font**: select **Cascadia Code** or **Consolas**
 3. **Text** → **Locale**: `en_US`
 4. **Text** → **Character set**: `UTF-8`
 5. **Apply** → **Save**
 
-Также можно установить локаль:
+You can also set locale:
 
 ```bash
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 ```
 
-## Почему предыдущее решение не работало
+## Why previous solution didn't work
 
-1. **cleanTextForWindows() применялся к неправильному тексту**
-   - Метод пытался исправить уже искаженный текст (mojibake)
-   - Но текст в памяти Java был правильным, искажение происходило при выводе
-   - Применение метода ДО вывода было бесполезно
+1. **cleanTextForWindows() was applied to wrong text**
+   - Method tried to fix already corrupted text (mojibake)
+   - But text in Java memory was correct, corruption happened during output
+   - Applying method BEFORE output was useless
 
-2. **setupUTF8ConsoleStreams() не работал в GitBash**
-   - Попытка переконфигурировать `System.out` через `PrintStream` не помогала
-   - GitBash требует другого подхода
+2. **setupUTF8ConsoleStreams() didn't work in GitBash**
+   - Attempt to reconfigure `System.out` via `PrintStream` didn't help
+   - GitBash requires different approach
 
-3. **Правильное решение - OutputStreamWriter**
-   - Использование `OutputStreamWriter` с явным UTF-8
-   - Обертка существующего `System.out` вместо его замены
-   - AutoFlush для корректной обработки многобайтовых последовательностей
+3. **Correct solution - OutputStreamWriter**
+   - Using `OutputStreamWriter` with explicit UTF-8
+   - Wrapping existing `System.out` instead of replacing it
+   - AutoFlush for correct handling of multibyte sequences
 
-## Технические детали
+## Technical details
 
 ### UTF8Console.initialize()
 
@@ -97,7 +97,7 @@ out = new PrintWriter(
 
 err = new PrintWriter(
     new OutputStreamWriter(System.err, StandardCharsets.UTF_8),
-    true  // autoFlush
+    true // autoFlush
 );
 ```
 
@@ -107,52 +107,52 @@ err = new PrintWriter(
 public static void println(String text) {
     if (out != null) {
         out.println(text);
-        out.flush();  // Явный flush после каждого вывода
+        out.flush();  // Explicit flush after each output
     } else {
         System.out.println(text);  // Fallback
     }
 }
 ```
 
-## Тестирование / Testing
+## Testing
 
 ```bash
-# Запустить все тесты
+# Run all tests
 mvn test
 
-# Запустить только тесты UTF8Console
+# Run only UTF8Console tests
 mvn test -Dtest=UTF8ConsoleTest
 
-# Полная проверка с coverage
+# Full verification with coverage
 mvn verify
 ```
 
-**Результаты:**
-- ✅ 261 тестов прошли успешно
+**Results:**
+- ✅ 261 tests passed successfully
 - ✅ Instruction coverage: 89%
 - ✅ Branch coverage: 77%
 - ✅ BUILD SUCCESS
 
-## Проверка Unicode
+## Unicode Check
 
-Запустите приложение и проверьте что символы отображаются корректно:
+Run the application and check that characters are displayed correctly:
 
 ```bash
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-**Ожидаемый вывод:**
+**Expected output:**
 
 ```
-═══════════════════════════════════════════════════════════════
+══════════════════════════════════
   Repository Maintainability Index Report
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════
 
 Repository: prettier/prettier
 Overall Score: 76.30/100
 Rating: GOOD
 
-───────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────
   Detailed Metrics
 ───────────────────────────────────────────────────────────────
 
@@ -163,47 +163,47 @@ Rating: GOOD
 
 ## Troubleshooting
 
-### Все еще вижу искаженные символы
+### Still see corrupted characters
 
-1. **Проверьте шрифт GitBash**
-   - Должен быть установлен шрифт с поддержкой Unicode (Cascadia Code, Consolas)
+1. **Check GitBash font**
+   - Unicode-supporting font should be installed (Cascadia Code, Consolas)
 
-2. **Проверьте локаль**
+2. **Check locale**
    ```bash
-   echo $LANG  # Должно быть en_US.UTF-8 или аналогичное
+   echo $LANG # Should be en_US.UTF-8 or similar
    ```
 
-3. **Попробуйте Windows Terminal**
-   - Windows Terminal имеет лучшую поддержку UTF-8
-   - Установите из Microsoft Store
+3. **Try Windows Terminal**
+   - Windows Terminal has better UTF-8 support
+   - Install from Microsoft Store
 
-4. **Принудительная UTF-8**
+4. **Forced UTF-8**
    ```bash
    export LANG=en_US.UTF-8
    java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
    ```
 
-## Статус / Status
+## Status
 
-✅ **Исправление применено и протестировано**
+✅ **Fix applied and tested**
 
-- [x] Создан класс UTF8Console
-- [x] Интегрирован в Main и AnalyzeCommand
-- [x] Написаны тесты (11 тестов)
-- [x] Все тесты проходят (261 тестов)
-- [x] Coverage соответствует требованиям
+- [x] Created UTF8Console class
+- [x] Integrated into Main and AnalyzeCommand
+- [x] Written tests (11 tests)
+- [x] All tests pass (261 tests)
+- [x] Coverage meets requirements
 - [x] BUILD SUCCESS
-- [x] Убраны неработающие подходы (cleanTextForWindows в formatters)
-- [x] Документация обновлена
+- [x] Removed non-working approaches (cleanTextForWindows in formatters)
+- [x] Documentation updated
 
-## Следующие шаги
+## Next steps
 
-1. Соберите новую версию: `mvn clean package`
-2. Замените старый JAR на новый
-3. Запустите приложение в GitBash на Windows
-4. Проверьте что символы `═`, `─`, `▪` отображаются корректно
-5. Если проблема сохраняется - проверьте настройки шрифта в GitBash
+1. Build new version: `mvn clean package`
+2. Replace old JAR with new one
+3. Run application in GitBash on Windows
+4. Check that characters `═`, `─`, `▪` are displayed correctly
+5. If problem persists - check GitBash font settings
 
 ---
 
-**Важно:** Это исправление НЕ заменяет Unicode символы на ASCII. Оно обеспечивает корректное отображение Unicode в GitBash через правильную настройку кодировки вывода.
+**Important:** This fix does NOT replace Unicode characters with ASCII. It ensures correct Unicode display in GitBash through proper output encoding setup.

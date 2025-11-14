@@ -2,6 +2,8 @@
 
 A production-level command-line tool for automated evaluation of GitHub repository quality and maintainability.
 
+> **🚀 Quick Start**: New to RMI? Check out [QUICK_START.md](QUICK_START.md) for a fast setup guide!
+
 ## Overview
 
 The Repository Maintainability Index tool analyzes GitHub repositories and provides a comprehensive assessment of their quality based on multiple metrics including documentation, commit quality, activity, issue management, community engagement, and branch management.
@@ -44,67 +46,141 @@ mvn clean package
 
 This will create an executable JAR file in the `target/` directory.
 
+## Environment Configuration
+
+The application supports configuration via environment variables. You can set them directly or use a `.env` file in the project root.
+
+### Environment Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `GITHUB_TOKEN` | GitHub personal access token for higher API rate limits | None | Recommended |
+| `OPENROUTER_API_KEY` | API key for OpenRouter LLM service | None | Required for LLM features |
+| `OPENROUTER_MODEL` | LLM model to use for analysis | `openai/gpt-oss-20b:free` | Optional |
+| `OPENAI_API_BASE` | OpenRouter API base URL | `https://openrouter.ai/api/v1` | Optional |
+
+### Using .env File
+
+Create a `.env` file in the project root:
+
+```bash
+# GitHub API token for authentication
+# Get your token from: https://github.com/settings/tokens
+# Required scopes: public_repo, repo:status
+GITHUB_TOKEN=your_github_token_here
+
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# Optional: Custom model
+OPENROUTER_MODEL=openai/gpt-oss-20b:free
+
+# Optional: Custom API base (usually not needed)
+OPENAI_API_BASE=https://openrouter.ai/api/v1
+```
+
+**⚠️ Security Warning:** Never commit `.env` files to version control. The project `.gitignore` already excludes `.env` files.
+
+### Alternative: Set Environment Variables Directly
+
+```bash
+export GITHUB_TOKEN=your_github_token_here
+export OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
 ## Usage
 
 ### 🪟 Windows & GitBash: Unicode/UTF-8 Support
 
-**The application now automatically configures UTF-8 encoding for proper Unicode display!**
+**IMPORTANT**: For proper Unicode display (box-drawing characters like ═, ─, │, ┌, ┐, └, ┘), you **MUST** use one of these methods:
 
-Unicode box-drawing characters (═, ─, │, ┌, ┐, └, ┘, ▪) should display correctly out of the box on:
-- ✅ Linux terminals
-- ✅ macOS terminals  
-- ✅ Windows Command Prompt (with automatic `chcp 65001`)
-- ✅ Windows PowerShell
-- ✅ GitBash on Windows
+> **Why?** Java requires `-Dfile.encoding=UTF-8` to be set at JVM startup. This cannot be changed after the JVM starts. Additionally, Git Bash on Windows needs `chcp 65001` to display Unicode correctly.
 
-**If you still see garbled characters (like 'ΓòÉ' instead of '═'):**
+#### ✅ Method 1: Use the provided launcher scripts (RECOMMENDED)
 
 ```bash
-# Git Bash (set locale)
-export LANG=en_US.UTF-8
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+# Windows - Quick launcher
+rmi.bat analyze owner/repo
 
-# Command Prompt (already handled automatically, but you can force it)
-chcp 65001
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
-
-# PowerShell (set output encoding)
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
-```
-
-**Or use the provided scripts (which handle encoding automatically):**
-```bash
-# Windows
-run-analysis.bat analyze owner/repo --llm
+# Windows - Full-featured launcher  
+run-with-encoding.bat analyze owner/repo --llm
 
 # Linux / macOS / Git Bash
-./run-analysis.sh analyze owner/repo --llm
+./run-with-encoding.sh analyze owner/repo --llm
 ```
+
+#### ✅ Method 2: Add `-Dfile.encoding=UTF-8` flag
+
+```bash
+# Windows Command Prompt
+chcp 65001
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# Git Bash
+export LANG=en_US.UTF-8
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# PowerShell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+```
+
+**Why is this needed?** Java requires the `-Dfile.encoding=UTF-8` flag to be set at JVM startup for proper Unicode handling. The application cannot change this after the JVM has started. The provided scripts handle this automatically.
+
+**❌ This will NOT work correctly:**
+```bash
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+# You'll see garbled characters like 'ΓòÉ' instead of '═'
+```
+
+**💡 Tip**: To avoid typing the flag every time, you can configure Git Bash to always use UTF-8:
+
+**Quick setup (automatic):**
+```bash
+./setup-gitbash-utf8.sh
+```
+
+**Manual setup:** See [GITBASH_UTF8_SETUP.md](GITBASH_UTF8_SETUP.md) for detailed instructions.
 
 ### Basic Usage
 
+**⚠️ IMPORTANT**: Always use `-Dfile.encoding=UTF-8` for proper Unicode display:
+
 ```bash
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+```
+
+Or use the quick launcher script:
+```bash
+rmi.bat analyze owner/repo
 ```
 
 ### With GitHub Token (Recommended)
 
-To avoid rate limiting, use a GitHub personal access token:
+To avoid rate limiting, use a GitHub personal access token. You can set it via environment variable or command line:
 
 ```bash
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --token YOUR_GITHUB_TOKEN
+# Via environment variable (recommended) - DON'T FORGET -Dfile.encoding=UTF-8!
+GITHUB_TOKEN=your_token java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+
+# Via command line parameter
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --token YOUR_GITHUB_TOKEN
+
+# Or use the script (handles encoding automatically)
+rmi.bat analyze owner/repo --token YOUR_GITHUB_TOKEN
 ```
+
+See [Environment Configuration](#environment-configuration) for details on setting up `.env` files.
 
 ### With AI Analysis (LLM)
 
-Enable AI-powered deep analysis with LLM integration:
+Enable AI-powered deep analysis with LLM integration. Set your OpenRouter API key via environment variable or `.env` file:
 
 ```bash
-# IMPORTANT: Never commit your API key to git!
-# See SECURITY_BEST_PRACTICES.md for details
-export OPENROUTER_API_KEY=your_api_key_here
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm
+# Using environment variable - DON'T FORGET -Dfile.encoding=UTF-8!
+OPENROUTER_API_KEY=your_api_key_here java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm
+
+# Or set OPENROUTER_API_KEY in your .env file and use the script
+rmi.bat analyze owner/repo --llm
 ```
 
 This provides:
@@ -113,25 +189,32 @@ This provides:
 - 👥 **Community Health**: Responsiveness, helpfulness, and tone evaluation
 - 💡 **AI Recommendations**: Prioritized suggestions with impact and confidence scores
 
-⚠️ **Security Note**: OpenRouter automatically disables API keys exposed in public repositories. Always use environment variables. See [SECURITY_BEST_PRACTICES.md](SECURITY_BEST_PRACTICES.md) for proper usage.
+⚠️ **Security Note**: OpenRouter automatically disables API keys exposed in public repositories. Always use environment variables or `.env` files (never commit them to git). See [Environment Configuration](#environment-configuration) and [SECURITY_BEST_PRACTICES.md](SECURITY_BEST_PRACTICES.md) for proper usage.
 
-You can specify a custom model:
+You can specify a custom model via environment variable or command line:
 
 ```bash
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm --model openai/gpt-4
+# Via environment variable
+OPENROUTER_MODEL=openai/gpt-4 java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm
+
+# Via command line parameter (overrides environment variable)
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm --model openai/gpt-4
+
+# Or use the script
+rmi.bat analyze owner/repo --llm --model openai/gpt-4
 ```
 
 ### JSON Output
 
 ```bash
-java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --format json
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --format json
 ```
 
 ### Help
 
 ```bash
-java -jar target/repo-maintainability-index-1.0.0.jar --help
-java -jar target/repo-maintainability-index-1.0.0.jar analyze --help
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar --help
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze --help
 ```
 
 ## Example Output
@@ -167,6 +250,85 @@ Good repository maintainability. Keep up the good work!
 
 ═══════════════════════════════════════════════════════════════
 ```
+
+## Troubleshooting Unicode Display
+
+### Problem: Garbled Characters in Git Bash/Windows
+
+If you see garbled characters like `ΓòÉ`, `ΓöÇ`, `Γû¬` instead of box-drawing characters (`═`, `─`, `▪`), this is a Unicode encoding issue.
+
+**The application automatically handles this**, but if you still experience issues:
+
+#### Solution 1: Use Provided Scripts (Recommended)
+
+```bash
+# Windows
+run-with-encoding.bat analyze owner/repo
+
+# Git Bash / Linux / macOS
+./run-with-encoding.sh analyze owner/repo
+```
+
+These scripts automatically configure UTF-8 encoding for your terminal.
+
+#### Solution 2: Manual Configuration
+
+**Git Bash:**
+```bash
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+```
+
+**Windows Command Prompt:**
+```cmd
+chcp 65001
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+```
+
+**PowerShell:**
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+java -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo
+```
+
+#### Solution 3: Configure Git Bash Font
+
+If characters still don't display correctly:
+
+1. Right-click on Git Bash title bar → Options
+2. Go to Text → Select...
+3. Choose a Unicode-compatible font:
+   - **Consolas** (recommended)
+   - **Cascadia Code**
+   - **Fira Code**
+4. Click OK and restart Git Bash
+
+### Common Issues
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| `ΓòÉ` instead of `═` | UTF-8 bytes interpreted as Windows-1252 | Use provided scripts or set `chcp 65001` |
+| Empty squares `□` | Font doesn't support Unicode | Change font to Consolas or Cascadia Code |
+| Question marks `?` | Terminal doesn't support UTF-8 | Set `LANG=en_US.UTF-8` in Git Bash |
+| Mixed correct/incorrect | Inconsistent encoding | Restart terminal after setting encoding |
+
+### Verification
+
+To verify Unicode support is working:
+
+```bash
+# Should display box-drawing characters correctly
+java -jar target/repo-maintainability-index-1.0.0.jar --help
+```
+
+You should see:
+- `═══` (double horizontal lines)
+- `───` (single horizontal lines)  
+- `▪` (bullet points)
+- Emojis like 🤖 📖 💡
+
+If you see these correctly, Unicode support is working!
 
 ## Development
 

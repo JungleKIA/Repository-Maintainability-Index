@@ -1,100 +1,100 @@
 # Final UTF-8 Fix: Direct Byte Writing
 
-## Проблема / Problem
+## Problem
 
-Предыдущие попытки не работали:
-1. ❌ Переконфигурация `System.out` через `PrintStream` с UTF-8
-2. ❌ Использование `PrintWriter` с `OutputStreamWriter`
-3. ❌ Применение `cleanTextForWindows()` к тексту
+Previous attempts didn't work:
+1. ❌ Reconfiguring `System.out` via `PrintStream` with UTF-8
+2. ❌ Using `PrintWriter` with `OutputStreamWriter`
+3. ❌ Applying `cleanTextForWindows()` to text
 
-**Все эти подходы не работали, потому что проблема в том, что GitBash получает неправильные байты от Java.**
+**All these approaches didn't work because the problem is that GitBash receives wrong bytes from Java.**
 
-## Решение / Solution
+## Solution
 
-**Писать RAW UTF-8 байты напрямую в `System.out`, минуя все слои кодировки Java.**
+**Write RAW UTF-8 bytes directly to `System.out`, bypassing all Java encoding layers.**
 
-### Ключевой код
+### Key code
 
 ```java
-// Вместо:
+// Instead of:
 System.out.println(text);
 
-// Используем:
+// Use:
 byte[] utf8Bytes = text.getBytes(StandardCharsets.UTF_8);
 System.out.write(utf8Bytes);
 System.out.flush();
 ```
 
-### Почему это работает
+### Why this works
 
-1. **`text.getBytes(StandardCharsets.UTF-8)`**
-   - Гарантированно конвертирует строку в UTF-8 байты
-   - Независимо от системной кодировки
+1. **`text.getBytes(StandardCharsets.UTF_8)`**
+   - Guaranteed to convert string to UTF-8 bytes
+   - Regardless of system encoding
 
 2. **`System.out.write(byte[])`**
-   - Пишет **сырые байты** напрямую в поток
-   - НЕ применяет никаких преобразований кодировки
-   - GitBash получает чистые UTF-8 байты
+   - Writes **raw bytes** directly to stream
+   - DOES NOT apply any encoding transformations
+   - GitBash receives clean UTF-8 bytes
 
 3. **`System.out.flush()`**
-   - Немедленно отправляет байты в консоль
-   - Предотвращает буферизацию которая может сломать многобайтовые последовательности
+   - Immediately sends bytes to console
+   - Prevents buffering that can break multibyte sequences
 
-### Класс UTF8Console (новая реализация)
+### UTF8Console class (new implementation)
 
 ```java
 public static void println(String text) {
     try {
         if (text != null) {
-            // Конвертируем в UTF-8 байты
+            // Convert to UTF-8 bytes
             byte[] utf8Bytes = (text + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
-            // Пишем напрямую, минуя кодировку Java
+            // Write directly, bypassing Java encoding
             System.out.write(utf8Bytes);
-            // Немедленно отправляем
+            // Send immediately
             System.out.flush();
         }
     } catch (IOException e) {
-        // Fallback к стандартному println
+        // Fallback to standard println
         System.out.println(text);
     }
 }
 ```
 
-## Тестирование / Testing
+## Testing
 
-### Тест UTF-8 байтов
+### UTF-8 bytes test
 
-Символы и их UTF-8 байты:
+Characters and their UTF-8 bytes:
 
-| Символ | Unicode | UTF-8 байты |
-|--------|---------|-------------|
+| Character | Unicode | UTF-8 bytes |
+|-----------|---------|-------------|
 | `═` | U+2550 | `0xE2 0x95 0x90` |
 | `─` | U+2500 | `0xE2 0x94 0x80` |
 | `▪` | U+25AA | `0xE2 0x96 0xAA` |
 
-Тестовый файл `TestUTF8Direct.java` показывает что оба подхода (стандартный `println` и прямая запись байтов) производят одинаковые байты на Linux, но в GitBash на Windows только прямая запись байтов работает корректно.
+Test file `TestUTF8Direct.java` shows that both approaches (standard `println` and direct byte writing) produce identical bytes on Linux, but in GitBash on Windows only direct byte writing works correctly.
 
-### Команды для проверки
+### Check commands
 
 ```bash
-# Собрать проект
+# Build project
 mvn clean package
 
-# Запустить тесты
+# Run tests
 mvn test
 
-# Полная проверка
+# Full verification
 mvn verify
 
-# Запустить приложение
+# Run application
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-## Что изменилось / What Changed
+## What Changed
 
-### Файл: `UTF8Console.java`
+### File: `UTF8Console.java`
 
-**ДО:**
+**BEFORE:**
 ```java
 out = new PrintWriter(
     new OutputStreamWriter(System.out, StandardCharsets.UTF_8), 
@@ -104,21 +104,21 @@ out.println(text);
 out.flush();
 ```
 
-**ПОСЛЕ:**
+**AFTER:**
 ```java
 byte[] utf8Bytes = (text + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
 System.out.write(utf8Bytes);
 System.out.flush();
 ```
 
-### Ключевые отличия
+### Key differences
 
-1. **НЕТ `PrintWriter`** - убрали обертку
-2. **НЕТ `OutputStreamWriter`** - убрали еще одну обертку
-3. **ПРЯМАЯ запись байтов** - `System.out.write(byte[])`
-4. **Явная конвертация в UTF-8** - `getBytes(StandardCharsets.UTF_8)`
+1. **NO `PrintWriter`** - removed wrapper
+2. **NO `OutputStreamWriter`** - removed another wrapper
+3. **DIRECT byte writing** - `System.out.write(byte[])`
+4. **Explicit UTF-8 conversion** - `getBytes(StandardCharsets.UTF_8)`
 
-## Почему предыдущие подходы не работали
+## Why previous approaches didn't work
 
 ### 1. `PrintWriter` + `OutputStreamWriter`
 
@@ -128,9 +128,9 @@ PrintWriter out = new PrintWriter(
 );
 ```
 
-**Проблема:** `OutputStreamWriter` пытается конвертировать символы в байты, но `System.out` УЖЕ имеет свою кодировку. Происходит двойное кодирование или некорректное преобразование.
+**Problem:** `OutputStreamWriter` tries to convert characters to bytes, but `System.out` ALREADY has its own encoding. Results in double encoding or incorrect transformation.
 
-### 2. Переконфигурация `System.out`
+### 2. Reconfiguring `System.out`
 
 ```java
 System.setOut(new PrintStream(
@@ -140,117 +140,117 @@ System.setOut(new PrintStream(
 ));
 ```
 
-**Проблема:** GitBash все равно не интерпретирует байты правильно, потому что Java где-то в цепочке все равно применяет неправильную кодировку.
+**Problem:** GitBash still doesn't interpret bytes correctly, because Java somewhere in the chain still applies wrong encoding.
 
-### 3. `cleanTextForWindows()` на тексте
+### 3. `cleanTextForWindows()` on text
 
 ```java
 String cleaned = EncodingHelper.cleanTextForWindows(text);
 System.out.println(cleaned);
 ```
 
-**Проблема:** Текст В ПАМЯТИ правильный (`═`), искажение происходит при ВЫВОДЕ. Метод пытался исправить уже искаженный текст, но текст не был искажен до вывода.
+**Problem:** Text IN MEMORY is correct (`═`), corruption happens during OUTPUT. Method tried to fix already corrupted text, but text was not corrupted before output.
 
-## Правильное решение
+## Correct solution
 
-**Писать UTF-8 байты напрямую**, минуя ВСЕ слои кодировки Java:
+**Write UTF-8 bytes directly**, bypassing ALL Java encoding layers:
 
 ```java
 text (String) 
   → text.getBytes(UTF_8) (byte[])
   → System.out.write(byte[]) (RAW bytes)
-  → GitBash (interpretes as UTF-8) ✓
+ → GitBash (interprets as UTF-8) ✓
 ```
 
-## Инструкции для пользователя / User Instructions
+## User Instructions
 
-### 1. Соберите новую версию
+### 1. Build new version
 
 ```bash
 mvn clean package
 ```
 
-### 2. Убедитесь что GitBash настроен на UTF-8
+### 2. Make sure GitBash is configured for UTF-8
 
 ```bash
-# Проверьте локаль
-echo $LANG  # Должно быть en_US.UTF-8
+# Check locale
+echo $LANG  # Should be en_US.UTF-8
 
-# Если нет, установите:
+# If not, set:
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 ```
 
-### 3. Убедитесь что используется UTF-8 шрифт
+### 3. Make sure UTF-8 font is used
 
-В GitBash:
-- Options → Text → Font: **Cascadia Code**, **Consolas**, или **JetBrains Mono**
+In GitBash:
+- Options → Text → Font: **Cascadia Code**, **Consolas**, or **JetBrains Mono**
 - Options → Text → Character set: **UTF-8**
 
-### 4. Запустите приложение
+### 4. Run application
 
 ```bash
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-### Ожидаемый результат
+### Expected result
 
 ```
-═══════════════════════════════════════════════════════════════
+════════════════════
   Repository Maintainability Index Report
-═══════════════════════════════════════════════════════════════
+════════════════════════════
 
 Repository: prettier/prettier
 Overall Score: 76.30/100
 Rating: GOOD
 
-───────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────
   Detailed Metrics
-───────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────
 
 ▪ Documentation: 80.00/100 (weight: 20%)
 ▪ Commit Quality: 100.00/100 (weight: 15%)
 ...
 ```
 
-**Символы `═`, `─`, `▪` должны отображаться корректно, а НЕ как `ΓòÉ`, `ΓöÇ`, `Γû¬`.**
+**Characters `═`, `─`, `▪` should display correctly, NOT as `ΓòÉ`, `ΓöÇ`, `Γû¬`.**
 
-## Техническая информация / Technical Details
+## Technical Details
 
 ### System.out.write() vs System.out.println()
 
-| Метод | Что делает | Кодировка |
-|-------|-----------|-----------|
-| `println(String)` | Конвертирует String → bytes используя системную кодировку | Зависит от системы |
-| `write(byte[])` | Пишет байты напрямую, БЕЗ конвертации | НЕТ (сырые байты) |
+| Method | What it does | Encoding |
+|--------|-------------|----------|
+| `println(String)` | Converts String → bytes using system encoding | Depends on system |
+| `write(byte[])` | Writes bytes directly, NO conversion | NONE (raw bytes) |
 
-### UTF-8 байты для box-drawing символов
+### UTF-8 bytes for box-drawing characters
 
-Каждый символ кодируется **3 байтами** в UTF-8:
+Each character is encoded as **3 bytes** in UTF-8:
 
 - `═` = `E2 95 90` (hex)
 - `─` = `E2 94 80` (hex)
 - `▪` = `E2 96 AA` (hex)
 
-GitBash ожидает эти точные байты. Если Java отправляет другие байты (из-за неправильной кодировки), GitBash показывает mojibake.
+GitBash expects these exact bytes. If Java sends other bytes (due to wrong encoding), GitBash shows mojibake.
 
-## Статус / Status
+## Status
 
-✅ **Финальное исправление применено**
+✅ **Final fix applied**
 
-- [x] UTF8Console переписан для прямой записи байтов
-- [x] Все тесты проходят (261 тест)
+- [x] UTF8Console rewritten for direct byte writing
+- [x] All tests pass (261 tests)
 - [x] BUILD SUCCESS
-- [x] Проверено на Linux (работает)
-- [x] Готово для проверки на Windows/GitBash
+- [x] Tested on Linux (works)
+- [x] Ready for testing on Windows/GitBash
 
-## Следующие шаги
+## Next steps
 
-1. ✅ Соберите: `mvn clean package`
-2. ✅ Замените JAR
-3. ⏳ **Проверьте на Windows/GitBash** - запустите приложение
-4. ⏳ Подтвердите что символы отображаются корректно
+1. ✅ Build: `mvn clean package`
+2. ✅ Replace JAR
+3. ⏳ **Test on Windows/GitBash** - run application
+4. ⏳ Confirm that characters display correctly
 
 ---
 
-**Это должно быть финальное решение. Прямая запись UTF-8 байтов - единственный надежный способ обойти проблемы кодировки Java в GitBash.**
+**This should be the final solution. Direct UTF-8 byte writing - the only reliable way to bypass Java encoding problems in GitBash.**

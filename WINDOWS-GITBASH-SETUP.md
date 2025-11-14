@@ -1,13 +1,13 @@
 # Windows/GitBash Setup Guide for UTF-8 Unicode Support
 
-## Проблема / Problem
+## Problem
 
-При запуске приложения на Windows в GitBash Unicode символы отображаются некорректно:
+When running the application on Windows in GitBash, Unicode characters are displayed incorrectly:
 
-❌ **Неправильно:**
+❌ **Incorrect:**
 ```
 ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-  Repository Maintainability Index Report
+ Repository Maintainability Index Report
 ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 
 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
@@ -17,240 +17,240 @@
 Γû¬ Documentation: 80,00/100
 ```
 
-✅ **Правильно:**
+✅ **Correct:**
 ```
-═══════════════════════════════════════════════════════════════
+═══════════════════════════════════
   Repository Maintainability Index Report
-═══════════════════════════════════════════════════════════════
+═════════════════════════════════════════════
 
-───────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────
   Detailed Metrics
 ───────────────────────────────────────────────────────────────
 
 ▪ Documentation: 80.00/100 (weight: 20%)
 ```
 
-## Решение / Solution
+## Solution
 
-Приложение **автоматически** настраивает UTF-8 кодировку при запуске.
+The application **automatically** configures UTF-8 encoding when started.
 
-### Автоматическая настройка (встроена в приложение)
+### Automatic Configuration (built into application)
 
-Приложение автоматически выполняет следующие шаги:
+The application automatically performs the following steps:
 
-1. **Установка системных свойств Java**
+1. **Setting Java system properties**
    - `file.encoding=UTF-8`
    - `sun.jnu.encoding=UTF-8`
    - `console.encoding=UTF-8`
 
-2. **Настройка Windows Console (только на Windows)**
-   - Выполняет `chcp 65001` для установки кодовой страницы UTF-8
+2. **Setting up Windows Console (Windows only)**
+   - Executes `chcp 65001` to set code page to UTF-8
 
-3. **Перенастройка потоков вывода**
-   - Заменяет `System.out` и `System.err` на UTF-8 потоки
-   - Включает autoFlush для корректной работы в GitBash
+3. **Reconfiguring output streams**
+   - Replaces `System.out` and `System.err` with UTF-8 streams
+   - Enables autoFlush for correct GitBash operation
 
-4. **Настройка логирования**
-   - Конфигурирует Logback для UTF-8
-   - Настраивает java.util.logging для UTF-8
+4. **Setting up logging**
+   - Configures Logback for UTF-8
+   - Sets up java.util.logging for UTF-8
 
-5. **Восстановление поврежденных символов (mojibake)**
-   - Автоматически исправляет искаженные символы, если они появились
+5. **Recovering corrupted characters (mojibake)**
+   - Automatically fixes corrupted characters if they appear
 
-### Ручная настройка (если нужна)
+### Manual Configuration (if needed)
 
-Если автоматическая настройка не сработала, выполните следующие шаги:
+If automatic configuration doesn't work, perform the following steps:
 
-#### 1. Настройте GitBash
+#### 1. Configure GitBash
 
-Добавьте в `~/.bashrc`:
+Add to `~/.bashrc`:
 
 ```bash
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 ```
 
-Примените изменения:
+Apply changes:
 
 ```bash
 source ~/.bashrc
 ```
 
-#### 2. Настройте шрифт в GitBash
+#### 2. Configure font in GitBash
 
-1. Правый клик на заголовок окна GitBash → **Options**
-2. **Text** → **Font**: выберите один из:
-   - **Cascadia Code** (рекомендуется)
+1. Right-click on GitBash window title → **Options**
+2. **Text** → **Font**: select one of:
+   - **Cascadia Code** (recommended)
    - **Consolas**
    - **JetBrains Mono**
 3. **Text** → **Locale**: `en_US`
 4. **Text** → **Character set**: `UTF-8`
 5. **Apply** → **Save**
 
-#### 3. Запустите приложение
+#### 3. Run the application
 
 ```bash
-java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
+java -jar target/repo-maintainability-index-1.0.jar analyze prettier/prettier
 ```
 
-Или с явной установкой кодировки:
+Or with explicit encoding:
 
 ```bash
 java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-## Тестирование / Testing
+## Testing
 
-### Проверка окружения
+### Check environment
 
 ```bash
-# Проверьте локаль
+# Check locale
 echo $LANG
-# Должно быть: en_US.UTF-8 или аналогичное
+# Should be: en_US.UTF-8 or similar
 
-# Проверьте кодировку терминала
+# Check terminal encoding
 locale charmap
-# Должно быть: UTF-8
+# Should be: UTF-8
 ```
 
-### Тест Unicode символов
+### Test Unicode characters
 
-Запустите тестовый скрипт:
+Run the test script:
 
 ```bash
 ./test-unicode.sh
 ```
 
-Вы должны увидеть корректно отображенный бокс:
+You should see correctly displayed box:
 
 ```
 ┌─────────────────────┐
 │  Unicode Test Box   │
-│  ═══════════════   │
+│  ═════════════   │
 │  ▪ Item 1           │
 │  ▪ Item 2           │
 └─────────────────────┘
 ```
 
-### Тест приложения
+### Test application
 
 ```bash
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-Проверьте что символы `═`, `─`, `▪` отображаются корректно.
+Check that characters `═`, `─`, `▪` are displayed correctly.
 
-## Альтернативы / Alternatives
+## Alternatives
 
-### Вариант 1: Windows Terminal
+### Option 1: Windows Terminal
 
-Windows Terminal имеет лучшую встроенную поддержку UTF-8:
+Windows Terminal has better built-in UTF-8 support:
 
-1. Установите из Microsoft Store: **Windows Terminal**
-2. Откройте GitBash в Windows Terminal
-3. Запустите приложение
+1. Install from Microsoft Store: **Windows Terminal**
+2. Open GitBash in Windows Terminal
+3. Run the application
 
-### Вариант 2: PowerShell
+### Option 2: PowerShell
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-### Вариант 3: Command Prompt
+### Option 3: Command Prompt
 
 ```cmd
 chcp 65001
 java -jar target/repo-maintainability-index-1.0.0.jar analyze prettier/prettier
 ```
 
-## Техническая документация / Technical Documentation
+## Technical Documentation
 
-Для разработчиков, которые хотят понять как работает реализация:
+For developers who want to understand how the implementation works:
 
-📖 См. [docs/UTF8-ENCODING-IMPLEMENTATION.md](docs/UTF8-ENCODING-IMPLEMENTATION.md)
+📖 See [docs/UTF8-ENCODING-IMPLEMENTATION.md](docs/UTF8-ENCODING-IMPLEMENTATION.md)
 
-Этот документ содержит:
-- Архитектуру решения (4 слоя защиты)
-- Детали реализации каждого слоя
-- Алгоритм восстановления mojibake
-- Объяснение почему это работает для GitBash
-- Рекомендации по тестированию
+This document contains:
+- Solution architecture (4 protection layers)
+- Implementation details for each layer
+- Mojibake recovery algorithm
+- Explanation of why this works for GitBash
+- Testing recommendations
 
-## Файлы проекта / Project Files
+## Project Files
 
-Ключевые файлы, связанные с UTF-8:
+Key files related to UTF-8:
 
-- `src/main/java/com/kaicode/rmi/Main.java` - Точка входа, вызывает setupUTF8ConsoleStreams()
-- `src/main/java/com/kaicode/rmi/util/EncodingHelper.java` - Основная логика UTF-8
-- `src/main/java/com/kaicode/rmi/util/ReportFormatter.java` - Применяет cleanTextForWindows()
-- `src/main/java/com/kaicode/rmi/util/LLMReportFormatter.java` - Применяет cleanTextForWindows()
-- `src/main/resources/logback.xml` - UTF-8 для логирования
-- `src/test/java/com/kaicode/rmi/util/EncodingHelperTest.java` - 34 теста UTF-8 функциональности
-- `docs/UTF8-ENCODING-IMPLEMENTATION.md` - Техническая документация
-- `test-unicode.sh` - Скрипт для проверки Unicode
+- `src/main/java/com/kaicode/rmi/Main.java` - Entry point, calls setupUTF8ConsoleStreams()
+- `src/main/java/com/kaicode/rmi/util/EncodingHelper.java` - Main UTF-8 logic
+- `src/main/java/com/kaicode/rmi/util/ReportFormatter.java` - Applies cleanTextForWindows()
+- `src/main/java/com/kaicode/rmi/util/LLMReportFormatter.java` - Applies cleanTextForWindows()
+- `src/main/resources/logback.xml` - UTF-8 for logging
+- `src/test/java/com/kaicode/rmi/util/EncodingHelperTest.java` - 34 UTF-8 functionality tests
+- `docs/UTF8-ENCODING-IMPLEMENTATION.md` - Technical documentation
+- `test-unicode.sh` - Unicode check script
 
 ## Troubleshooting
 
-### Все еще вижу искаженные символы
+### Still seeing corrupted characters
 
-**Причина:** Шрифт не поддерживает box-drawing символы
+**Reason:** Font doesn't support box-drawing characters
 
-**Решение:** Установите шрифт Cascadia Code или Consolas
+**Solution:** Install Cascadia Code or Consolas font
 
-### GitBash показывает "?" вместо символов
+### GitBash shows "?" instead of characters
 
-**Причина:** Локаль не установлена в UTF-8
+**Reason:** Locale is not set to UTF-8
 
-**Решение:**
+**Solution:**
 ```bash
 export LANG=en_US.UTF-8
 ```
 
-### Работает в Linux, не работает в Windows
+### Works in Linux, doesn't work in Windows
 
-**Причина:** Windows использует другую кодовую страницу по умолчанию
+**Reason:** Windows uses different default code page
 
-**Решение:** Приложение автоматически выполняет `chcp 65001`, но вы можете
-выполнить это вручную перед запуском
+**Solution:** The application automatically executes `chcp 65001`, but you can
+execute this manually before running
 
-### IntelliJ IDEA показывает искаженные символы
+### IntelliJ IDEA shows corrupted characters
 
-**Решение:**
+**Solution:**
 1. File → Settings → Editor → File Encodings
 2. Global Encoding: **UTF-8**
 3. Project Encoding: **UTF-8**
 4. Default encoding for properties files: **UTF-8**
 
-## Статус / Status
+## Status
 
-✅ **Реализовано и протестировано**
+✅ **Implemented and tested**
 
-- [x] Автоматическая настройка UTF-8 при запуске
-- [x] Поддержка Windows Command Prompt
-- [x] Поддержка Windows PowerShell
-- [x] Поддержка GitBash на Windows
-- [x] Поддержка Linux terminals
-- [x] Поддержка macOS terminals
-- [x] Автоматическое восстановление mojibake
-- [x] 250 unit тестов (все проходят)
+- [x] Automatic UTF-8 configuration on startup
+- [x] Windows Command Prompt support
+- [x] Windows PowerShell support
+- [x] Windows GitBash support
+- [x] Linux terminals support
+- [x] macOS terminals support
+- [x] Automatic mojibake recovery
+- [x] 250 unit tests (all pass)
 - [x] 90% instruction coverage
 - [x] 79% branch coverage
-- [x] Документация для пользователей
-- [x] Техническая документация для разработчиков
+- [x] User documentation
+- [x] Developer technical documentation
 
-## Контакты / Contacts
+## Contacts
 
-Если у вас возникли проблемы с отображением Unicode:
+If you have problems with Unicode display:
 
-1. Проверьте что локаль установлена в UTF-8: `echo $LANG`
-2. Проверьте что шрифт поддерживает box-drawing символы
-3. Запустите `test-unicode.sh` для диагностики
-4. См. техническую документацию: `docs/UTF8-ENCODING-IMPLEMENTATION.md`
+1. Check that locale is set to UTF-8: `echo $LANG`
+2. Check that font supports box-drawing characters
+3. Run `test-unicode.sh` for diagnostics
+4. See technical documentation: `docs/UTF8-ENCODING-IMPLEMENTATION.md`
 
 ---
 
-**Важно:** Приложение специально использует Unicode символы вместо ASCII для
-лучшего визуального представления. Мы НЕ заменяем их на ASCII (как `===` или `---`),
-потому что правильная настройка кодировки обеспечивает корректное отображение
-на всех современных терминалах.
+**Important:** The application specifically uses Unicode characters instead of ASCII for
+better visual representation. We DO NOT replace them with ASCII (like `===` or `---`),
+because proper encoding configuration ensures correct display
+on all modern terminals.

@@ -50,7 +50,7 @@ According to the reference implementation:
 4. The method doesn't check the OS - it just looks for mojibake patterns and fixes them
 
 From the reference documentation:
-> "cleanTextForWindows() работает для всех платформ - на Linux/macOS просто ничего не находит для замены"
+> "cleanTextForWindows() works for all platforms - on Linux/macOS it simply doesn't find anything to replace"
 
 This means: "cleanTextForWindows() works for all platforms - on Linux/macOS it simply doesn't find anything to replace" (in normal usage). But if mojibake IS present, it will be fixed.
 

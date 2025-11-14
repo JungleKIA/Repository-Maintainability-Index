@@ -57,6 +57,7 @@ Thumbs.db
 *_key.txt
 secrets.txt
 api_keys.txt
+*.txt
 
 # Nested repository
 Repository-Maintainability-Index/

@@ -157,7 +157,26 @@ public class EncodingHelper {
             System.setOut(new java.io.PrintStream(System.out, true, StandardCharsets.UTF_8));
             System.setErr(new java.io.PrintStream(System.err, true, StandardCharsets.UTF_8));
             
-            // Step 5: Configure java.util.logging to use UTF-8
+            // Step 5: Reinitialize Logback to use new System.out/err streams
+            // This is CRITICAL because Logback captures System.out during initialization
+            try {
+                Class<?> loggerFactoryClass = Class.forName("org.slf4j.LoggerFactory");
+                Object iLoggerFactory = loggerFactoryClass.getMethod("getILoggerFactory").invoke(null);
+                
+                Class<?> loggerContextClass = Class.forName("ch.qos.logback.classic.LoggerContext");
+                if (loggerContextClass.isInstance(iLoggerFactory)) {
+                    Object loggerContext = iLoggerFactory;
+                    loggerContextClass.getMethod("reset").invoke(loggerContext);
+                    
+                    Class<?> contextInitializerClass = Class.forName("ch.qos.logback.classic.util.ContextInitializer");
+                    Object contextInitializer = contextInitializerClass.getConstructor(loggerContextClass).newInstance(loggerContext);
+                    contextInitializerClass.getMethod("autoConfig").invoke(contextInitializer);
+                }
+            } catch (Exception e) {
+                // Ignore - Logback might not be present or configuration might fail
+            }
+            
+            // Step 6: Configure java.util.logging to use UTF-8
             try {
                 java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
                 java.util.logging.Handler[] handlers = rootLogger.getHandlers();
