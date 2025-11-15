@@ -18,7 +18,7 @@ public class ReportFormatter {
         StringBuilder json = new StringBuilder();
         json.append("{\n");
         json.append("  \"repository\": \"").append(report.getRepositoryFullName()).append("\",\n");
-        json.append("  \"overallScore\": ").append(String.format("%.2f", report.getOverallScore())).append(",\n");
+        json.append("  \"overallScore\": ").append(String.format(java.util.Locale.US, "%.2f", report.getOverallScore())).append(",\n");
         json.append("  \"rating\": \"").append(report.getRating()).append("\",\n");
         json.append("  \"metrics\": {\n");
 
@@ -26,8 +26,8 @@ public class ReportFormatter {
         for (Map.Entry<String, MetricResult> entry : report.getMetrics().entrySet()) {
             MetricResult metric = entry.getValue();
             json.append("    \"").append(metric.getName()).append("\": {\n");
-            json.append("      \"score\": ").append(String.format("%.2f", metric.getScore())).append(",\n");
-            json.append("      \"weight\": ").append(String.format("%.2f", metric.getWeight())).append(",\n");
+            json.append("      \"score\": ").append(String.format(java.util.Locale.US, "%.2f", metric.getScore())).append(",\n");
+            json.append("      \"weight\": ").append(String.format(java.util.Locale.US, "%.2f", metric.getWeight())).append(",\n");
             json.append("      \"description\": \"").append(escapeJson(metric.getDescription())).append("\",\n");
             json.append("      \"details\": \"").append(escapeJson(metric.getDetails())).append("\"\n");
             json.append("    }");
@@ -61,7 +61,7 @@ public class ReportFormatter {
 
         // Summary with visual rating
         text.append("📁 Repository: ").append(report.getRepositoryFullName()).append("\n");
-        text.append("🎯 Overall Score: ").append(String.format("%.2f", report.getOverallScore())).append("/100 ");
+        text.append("🎯 Overall Score: ").append(String.format(java.util.Locale.US, "%.2f", report.getOverallScore())).append("/100 ");
         text.append(getScoreBar(report.getOverallScore())).append("\n");
         text.append("⭐ Rating: ").append(getRatingWithEmoji(report.getRating())).append("\n\n");
 
@@ -73,8 +73,8 @@ public class ReportFormatter {
         for (MetricResult metric : report.getMetrics().values()) {
             String emoji = getMetricEmoji(metric.getName());
             String scoreIndicator = getScoreIndicator(metric.getScore());
-            
-            text.append(String.format("%s %s: %.2f/100 %s (weight: %.0f%%)\n",
+
+            text.append(String.format(java.util.Locale.US, "%s %s: %.2f/100 %s (weight: %.0f%%)\n",
                     emoji, metric.getName(), metric.getScore(), scoreIndicator, metric.getWeight() * 100));
             text.append("   ").append(getScoreBar(metric.getScore())).append("\n");
             text.append("   ").append(metric.getDescription()).append("\n");
@@ -89,7 +89,7 @@ public class ReportFormatter {
         text.append(centerText("💡 Recommendations", width)).append("\n");
         text.append(separator).append("\n\n");
         text.append(formatRecommendations(report)).append("\n");
-        
+
         // Footer
         text.append(bottomLine).append("\n");
 
@@ -109,9 +109,12 @@ public class ReportFormatter {
     }
 
     private String getScoreIndicator(double score) {
-        if (score >= 90) return "🟢";
-        if (score >= 75) return "🟡";
-        if (score >= 60) return "🟠";
+        if (score >= 90)
+            return "🟢";
+        if (score >= 75)
+            return "🟡";
+        if (score >= 60)
+            return "🟠";
         return "🔴";
     }
 
@@ -135,7 +138,12 @@ public class ReportFormatter {
     private String formatRecommendations(MaintainabilityReport report) {
         StringBuilder rec = new StringBuilder();
         String recommendation = report.getRecommendation();
-        
+
+        // Handle null or empty recommendation
+        if (recommendation == null || recommendation.isEmpty()) {
+            return "No recommendations available.";
+        }
+
         // Parse the recommendation text to add visual elements
         if (recommendation.contains("Excellent")) {
             rec.append("🎉 ").append(recommendation).append("\n");
@@ -147,7 +155,7 @@ public class ReportFormatter {
         } else {
             rec.append("🔧 ").append(recommendation);
         }
-        
+
         // Add visual priority indicators for improvements
         if (recommendation.contains("Focus on improving:")) {
             rec.append("\n\n   Priority areas for improvement:");
@@ -168,7 +176,7 @@ public class ReportFormatter {
                 }
             }
         }
-        
+
         return rec.toString();
     }
 

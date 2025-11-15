@@ -39,7 +39,7 @@ public class LLMReportFormatter {
         text.append(formatCommunityAnalysis(analysis.getCommunityAnalysis()));
         text.append("\n");
         text.append(formatTopRecommendations(analysis.getRecommendations()));
-        text.append(String.format("🤖 AI Analysis: %.1f%% confidence, %d tokens used\n",
+        text.append(String.format(java.util.Locale.US, "🤖 AI Analysis: %.1f%% confidence, %d tokens used\n",
                 analysis.getConfidence(), analysis.getTokensUsed()));
         
         return text.toString();

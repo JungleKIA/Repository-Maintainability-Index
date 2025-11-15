@@ -157,7 +157,7 @@ class ReportFormatterEdgeCaseTest {
                     .build();
             
             String textOutput = formatter.format(report, ReportFormatter.OutputFormat.TEXT);
-            assertThat(textOutput).contains(String.format("%.2f", score));
+            assertThat(textOutput).contains(String.format(java.util.Locale.US, "%.2f", score));
         }
     }
 }
