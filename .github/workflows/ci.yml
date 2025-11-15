@@ -1,8 +1,24 @@
+# CI/CD Pipeline for Repository Maintainability Index
+# 
+# Improvements implemented:
+# ✅ Explicit code coverage threshold check (jacoco:check)
+# ✅ SpotBugs now blocks build on critical bugs (removed continue-on-error)
+# ✅ Optimized: Reuse compiled classes across jobs (no duplicate compilation)
+# ✅ Added OWASP Dependency Check for security vulnerabilities
+# ✅ Added Trivy DB caching for faster scans
+# ✅ Added automatic GitHub Release creation on version tags
+# ✅ Package job now depends on code-quality and security-scan
+# 
+# Required GitHub Branch Protection Rules:
+# - Require status checks: build-and-test, code-quality, security-scan
+# - Require branches to be up to date before merging
+
 name: CI Pipeline
 
 on:
   push:
     branches: [ main, develop, enterprise-modernization-strategy ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, develop ]
 
@@ -27,6 +43,16 @@ jobs:
       - name: Build and verify
         run: mvn clean verify -B
       
+      - name: Check code coverage thresholds
+        run: mvn jacoco:check -B
+      
+      - name: Upload compiled classes for reuse
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-classes
+          path: target/
+          retention-days: 1
+      
       - name: Archive test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,20 +72,25 @@ jobs:
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
+    needs: [build-and-test]
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven'
+          name: compiled-classes
+          path: target/
       
-      - name: Compile project
-        run: mvn compile -B
+      - name: Cache Trivy DB
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: |
+            trivy-db-
       
       - name: Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -68,11 +99,29 @@ jobs:
           scan-ref: '.'
           format: 'table'
           exit-code: '0'
+          severity: 'CRITICAL,HIGH'
         continue-on-error: true
+      
+      - name: OWASP Dependency Check
+        run: |
+          # Download OWASP Dependency Check
+          wget -q https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
+          unzip -q dependency-check-9.0.7-release.zip
+          ./dependency-check/bin/dependency-check.sh --project "RMI" --scan . --format HTML --out target/dependency-check-report
+        continue-on-error: true
+      
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: target/dependency-check-report/
+          retention-days: 30
 
   code-quality:
     name: Code Quality Analysis
     runs-on: ubuntu-latest
+    needs: [build-and-test]
     
     steps:
       - name: Checkout code
@@ -87,20 +136,32 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Compile project
-        run: mvn compile -B
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: target/
       
-      - name: Run SpotBugs (optional)
-        run: mvn spotbugs:check -B || true
-        continue-on-error: true
+      - name: Run SpotBugs (critical bugs block build)
+        run: mvn spotbugs:check -B
+        continue-on-error: false
       
-      - name: Run Checkstyle (optional)
+      - name: Run Checkstyle (warnings only)
         run: mvn checkstyle:check -B || true
         continue-on-error: true
+      
+      - name: Upload SpotBugs report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: target/spotbugsXml.xml
+          retention-days: 30
 
   sbom-generation:
     name: Generate SBOM
     runs-on: ubuntu-latest
+    needs: [build-and-test]
     
     steps:
       - name: Checkout code
@@ -113,8 +174,11 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Compile project
-        run: mvn clean compile -B
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: target/
       
       - name: Generate CycloneDX SBOM
         run: mvn cyclonedx:makeBom -B
@@ -130,7 +194,7 @@ jobs:
   package:
     name: Package Application
     runs-on: ubuntu-latest
-    needs: [build-and-test]
+    needs: [build-and-test, code-quality, security-scan]
     if: github.event_name == 'push'
     
     steps:
@@ -153,3 +217,37 @@ jobs:
           name: application-jar
           path: target/repo-maintainability-index-*.jar
           retention-days: 90
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [package]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jar
+          path: artifacts/
+      
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: artifacts/
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/*.jar
+            artifacts/bom.*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
