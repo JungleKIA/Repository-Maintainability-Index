@@ -104,8 +104,13 @@ public class LLMAnalysis {
             this.clarity = clarity;
             this.completeness = completeness;
             this.newcomerFriendly = newcomerFriendly;
-            this.strengths = new ArrayList<>(strengths);
-            this.suggestions = new ArrayList<>(suggestions);
+            // Clean text from mojibake at construction time
+            this.strengths = strengths.stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(java.util.stream.Collectors.toList());
+            this.suggestions = suggestions.stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(java.util.stream.Collectors.toList());
         }
 
         public int getClarity() {
@@ -140,7 +145,10 @@ public class LLMAnalysis {
             this.clarity = clarity;
             this.consistency = consistency;
             this.informativeness = informativeness;
-            this.patterns = new ArrayList<>(patterns);
+            // Clean text from mojibake at construction time
+            this.patterns = patterns.stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(java.util.stream.Collectors.toList());
         }
 
         public int getClarity() {
@@ -172,8 +180,13 @@ public class LLMAnalysis {
             this.responsiveness = responsiveness;
             this.helpfulness = helpfulness;
             this.tone = tone;
-            this.strengths = new ArrayList<>(strengths);
-            this.suggestions = new ArrayList<>(suggestions);
+            // Clean text from mojibake at construction time
+            this.strengths = strengths.stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(java.util.stream.Collectors.toList());
+            this.suggestions = suggestions.stream()
+                    .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                    .collect(java.util.stream.Collectors.toList());
         }
 
         public int getResponsiveness() {
@@ -206,8 +219,11 @@ public class LLMAnalysis {
 
         public AIRecommendation(String title, String description, int impact, 
                                int confidence, String severity) {
-            this.title = Objects.requireNonNull(title);
-            this.description = Objects.requireNonNull(description);
+            // Clean text from mojibake at construction time
+            this.title = com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows(
+                    Objects.requireNonNull(title));
+            this.description = com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows(
+                    Objects.requireNonNull(description));
             this.impact = impact;
             this.confidence = confidence;
             this.severity = Objects.requireNonNull(severity);

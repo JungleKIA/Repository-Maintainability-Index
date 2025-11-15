@@ -1,22 +1,20 @@
 package com.kaicode.rmi;
 
 import com.kaicode.rmi.cli.AnalyzeCommand;
-import com.kaicode.rmi.util.EncodingHelper;
+import com.kaicode.rmi.util.EncodingInitializer;
 import picocli.CommandLine;
 
-@CommandLine.Command(
-        name = "rmi",
-        description = "Repository Maintainability Index - Automated GitHub repository quality assessment",
-        version = "1.0.0",
-        mixinStandardHelpOptions = true,
-        subcommands = {AnalyzeCommand.class}
-)
+@CommandLine.Command(name = "rmi", description = "Repository Maintainability Index - Automated GitHub repository quality assessment", version = "1.0.0", mixinStandardHelpOptions = true, subcommands = {
+        AnalyzeCommand.class })
 public class Main implements Runnable {
 
+    // CRITICAL: Load EncodingInitializer FIRST to set up UTF-8 streams
+    // before any logging framework (Logback/SLF4J) initializes
+    static {
+        EncodingInitializer.ensureInitialized();
+    }
+
     public static void main(String[] args) {
-        // Configure UTF-8 encoding for console output (especially important for Windows/GitBash)
-        EncodingHelper.setupUTF8ConsoleStreams();
-        
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
     }

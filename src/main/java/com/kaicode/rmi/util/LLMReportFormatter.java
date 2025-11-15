@@ -9,10 +9,13 @@ import java.util.List;
 
 public class LLMReportFormatter {
 
+    private final ReportFormatter reportFormatter = new ReportFormatter();
+
     public String formatWithLLM(MaintainabilityReport report, LLMAnalysis llmAnalysis) {
         StringBuilder output = new StringBuilder();
         
-        output.append(formatBasicReport(report));
+        // Use the same beautiful format as regular report
+        output.append(reportFormatter.format(report, ReportFormatter.OutputFormat.TEXT));
         output.append("\n\n");
         output.append(formatLLMInsights(llmAnalysis));
         output.append("\n\n");
@@ -21,32 +24,6 @@ public class LLMReportFormatter {
         output.append(formatCombinedRecommendations(report, llmAnalysis));
         
         return output.toString();
-    }
-
-    private String formatBasicReport(MaintainabilityReport report) {
-        StringBuilder text = new StringBuilder();
-        text.append("═══════════════════════════════════════════════════════════════\n");
-        text.append("  Repository Maintainability Index Report\n");
-        text.append("═══════════════════════════════════════════════════════════════\n\n");
-        text.append("Repository: ").append(report.getRepositoryFullName()).append("\n");
-        text.append("Overall Score: ").append(String.format("%.2f", report.getOverallScore())).append("/100\n");
-        text.append("Rating: ").append(report.getRating()).append("\n\n");
-        
-        text.append("───────────────────────────────────────────────────────────────\n");
-        text.append("  Detailed Metrics\n");
-        text.append("───────────────────────────────────────────────────────────────\n\n");
-        
-        for (MetricResult metric : report.getMetrics().values()) {
-            text.append(String.format("▪ %s: %.2f/100 (weight: %.0f%%)\n", 
-                    metric.getName(), metric.getScore(), metric.getWeight() * 100));
-            text.append("  ").append(metric.getDescription()).append("\n");
-            if (metric.getDetails() != null && !metric.getDetails().isEmpty()) {
-                text.append("  Details: ").append(metric.getDetails()).append("\n");
-            }
-            text.append("\n");
-        }
-        
-        return text.toString();
     }
 
     private String formatLLMInsights(LLMAnalysis analysis) {
@@ -62,7 +39,7 @@ public class LLMReportFormatter {
         text.append(formatCommunityAnalysis(analysis.getCommunityAnalysis()));
         text.append("\n");
         text.append(formatTopRecommendations(analysis.getRecommendations()));
-        text.append(String.format("🤖 AI Analysis: %.1f%% confidence, %d tokens used\n",
+        text.append(String.format(java.util.Locale.US, "🤖 AI Analysis: %.1f%% confidence, %d tokens used\n",
                 analysis.getConfidence(), analysis.getTokensUsed()));
         
         return text.toString();
@@ -160,9 +137,9 @@ public class LLMReportFormatter {
         
         for (int i = 0; i < count; i++) {
             LLMAnalysis.AIRecommendation rec = recommendations.get(i);
-            text.append(String.format("│ %s %s %-66s │\n", medals[i], rec.getSeverity(), rec.getTitle()));
-            text.append(String.format("│    %-70s │\n", rec.getDescription()));
-            text.append(String.format("│    Impact: %d%%, Confidence: %d%%%-42s │\n", 
+            text.append(String.format("│ %s %s %-65s │\n", medals[i], rec.getSeverity(), rec.getTitle()));
+            text.append(String.format("│    %-68s │\n", rec.getDescription()));
+            text.append(String.format("│    Impact: %d%%, Confidence: %d%%%-40s │\n", 
                     rec.getImpact(), rec.getConfidence(), ""));
             if (i < count - 1) {
                 text.append("│                                                                         │\n");

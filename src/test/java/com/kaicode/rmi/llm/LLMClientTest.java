@@ -95,4 +95,134 @@ class LLMClientTest {
         LLMClient defaultClient = new LLMClient("key", "model");
         assertThat(defaultClient).isNotNull();
     }
+
+    // ========== NEW TESTS FOR TEXT CLEANING ==========
+
+    @Test
+    void shouldReturnRawContentWithMojibake() throws Exception {
+        // Mock API response with mojibake patterns
+        // Note: LLMClient returns raw content; cleaning happens in LLMAnalyzer
+        String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"Well-structured sections with ΓöÇΓöÇΓöÇ separators\"}}],\"usage\":{\"total_tokens\":50}}";
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
+        LLMClient.LLMResponse response = client.analyze("Test prompt");
+
+        // Verify content is returned as-is (mojibake not cleaned at this level)
+        assertThat(response.getContent()).contains("ΓöÇΓöÇΓöÇ");
+        assertThat(response.getContent()).contains("Well-structured");
+    }
+
+    @Test
+    void shouldReturnBoxDrawingCharacterMojibake() throws Exception {
+        String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"ΓòÉΓòÉΓòÉ Header ΓòÉΓòÉΓòÉ\"}}],\"usage\":{\"total_tokens\":30}}";
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200));
+
+        LLMClient.LLMResponse response = client.analyze("Test");
+
+        // Verify content is returned as-is
+        assertThat(response.getContent()).contains("ΓòÉ");
+        assertThat(response.getContent()).contains("Header");
+    }
+
+    @Test
+    void shouldReturnDashVariantMojibake() throws Exception {
+        String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"firstΓÇæresponse time 24ΓÇô48 hours\"}}],\"usage\":{\"total_tokens\":40}}";
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200));
+
+        LLMClient.LLMResponse response = client.analyze("Test");
+
+        // Verify content is returned as-is
+        assertThat(response.getContent()).contains("ΓÇæ", "ΓÇô");
+        assertThat(response.getContent()).isEqualTo("firstΓÇæresponse time 24ΓÇô48 hours");
+    }
+
+    @Test
+    void shouldReturnMultipleMojibakePatterns() throws Exception {
+        String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"ΓòÉΓòÉ Header ΓöÇΓöÇ Text Γû¬ Bullet firstΓÇæresponse\"}}],\"usage\":{\"total_tokens\":60}}";
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200));
+
+        LLMClient.LLMResponse response = client.analyze("Test");
+
+        // Verify content is returned as-is with all mojibake patterns
+        assertThat(response.getContent()).contains("ΓòÉ", "ΓöÇ", "Γû¬", "ΓÇæ");
+        assertThat(response.getContent()).contains("Header", "Text", "Bullet");
+    }
+
+    @Test
+    void shouldHandleCleanTextWithoutMojibake() throws Exception {
+        String jsonResponse = """
+                {
+                    "choices": [{
+                        "message": {
+                            "content": "Clean text without any mojibake"
+                        }
+                    }],
+                    "usage": {
+                        "total_tokens": 20
+                    }
+                }
+                """;
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200));
+
+        LLMClient.LLMResponse response = client.analyze("Test");
+
+        // Clean text should remain unchanged
+        assertThat(response.getContent()).isEqualTo("Clean text without any mojibake");
+    }
+
+    @Test
+    void shouldCleanEmptyResponse() throws Exception {
+        String jsonResponse = """
+                {
+                    "choices": [{
+                        "message": {
+                            "content": ""
+                        }
+                    }],
+                    "usage": {
+                        "total_tokens": 0
+                    }
+                }
+                """;
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200));
+
+        LLMClient.LLMResponse response = client.analyze("Test");
+
+        // Empty content should be handled gracefully
+        assertThat(response.getContent()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnComplexLLMResponse() throws Exception {
+        String jsonResponse = "{\"choices\":[{\"message\":{\"content\":\"Well-structured sections with clear headings\\nComprehensive links to external resources\\nIncrease the frequency and speed of maintainer responses; many issues currently show no reply or followΓÇæup.\"}}],\"usage\":{\"total_tokens\":100}}";
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponse)
+                .setResponseCode(200));
+
+        LLMClient.LLMResponse response = client.analyze("Test");
+
+        // Verify content is returned as-is
+        assertThat(response.getContent()).contains("ΓÇæ");
+        assertThat(response.getContent()).contains("Well-structured", "follow");
+    }
 }

@@ -1,0 +1,43 @@
+#!/bin/bash
+# Test script to verify Unicode/UTF-8 encoding works correctly
+
+echo "════════════════════════════════════════════════════════"
+echo "  UTF-8 Unicode Test for RMI Application"  
+echo "════════════════════════════════════════════════════════"
+echo ""
+
+echo "Environment:"
+echo "  Locale: $LANG"
+echo "  Platform: $(uname -s)"
+echo "  Java Version: $(java -version 2>&1 | head -1)"
+echo ""
+
+echo "────────────────────────────────────────────────────────"
+echo "  Expected Unicode Characters"
+echo "────────────────────────────────────────────────────────"
+echo ""
+echo "Box Drawing Characters:"
+echo "  ═ (U+2550) - Box Drawings Double Horizontal"
+echo "  ─ (U+2500) - Box Drawings Light Horizontal"
+echo "  │ (U+2502) - Box Drawings Light Vertical"
+echo "  ┌ (U+250C) - Box Drawings Light Down and Right"
+echo "  ┐ (U+2510) - Box Drawings Light Down and Left"
+echo "  └ (U+2514) - Box Drawings Light Up and Right"
+echo "  ┘ (U+2518) - Box Drawings Light Up and Left"
+echo "  ▪ (U+25AA) - Black Small Square"
+echo ""
+
+echo "Sample Box:"
+echo "┌─────────────────────┐"
+echo "│  Unicode Test Box   │"
+echo "│  ═══════════════   │"
+echo "│  ▪ Item 1           │"
+echo "│  ▪ Item 2           │"
+echo "└─────────────────────┘"
+echo ""
+
+echo "════════════════════════════════════════════════════════"
+echo "If you see the characters correctly above, UTF-8 works!"
+echo "If you see garbled text (like ΓòÉ or ΓöÇ), there's an"
+echo "encoding issue that needs to be fixed."
+echo "════════════════════════════════════════════════════════"

@@ -87,6 +87,9 @@ public class LLMClient {
                     .get("content")
                     .getAsString();
 
+            // Note: Text cleaning is done in LLMAnalyzer after JSON parsing
+            // to avoid breaking JSON structure
+
             int tokensUsed = 0;
             if (jsonResponse.has("usage")) {
                 tokensUsed = jsonResponse.getAsJsonObject("usage")

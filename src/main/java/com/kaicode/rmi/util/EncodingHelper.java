@@ -23,27 +23,61 @@ public class EncodingHelper {
     }
 
     /**
-     * Cleans text for Windows console output by removing or replacing problematic characters.
+     * Cleans text for Windows console output by fixing mojibake (corrupted UTF-8 sequences).
      * 
-     * This method handles Unicode characters that may not display correctly in Windows console,
-     * while preserving them for environments that support full Unicode.
+     * This method detects and repairs common UTF-8 encoding errors that occur when UTF-8 text
+     * is incorrectly interpreted as Windows-1252 or ISO-8859-1, which is common in GitBash
+     * and Windows console environments.
+     * 
+     * Common mojibake patterns for box-drawing characters:
+     * - "ΓòÉ" should be "═" (U+2550)
+     * - "ΓöÇ" should be "─" (U+2500)
+     * - "Γû¬" should be "▪" (U+25AA)
+     * - "â€œ" should be """ (left double quote)
+     * - "â€"" should be "–" (en dash)
      * 
      * @param text the text to clean
-     * @return cleaned text suitable for Windows console
+     * @return cleaned text with mojibake repaired
      */
     public static String cleanTextForWindows(String text) {
         if (text == null) {
             return "";
         }
 
-        // Check if we're running on Windows
-        if (!isWindows()) {
-            return text;
-        }
-
-        // For Windows, we'll keep the text as-is but ensure UTF-8 output
-        // The key is using the proper PrintWriter, not modifying the text
-        return text;
+        String cleaned = text;
+        
+        // Replace common mojibake patterns from box-drawing characters
+        // These occur when UTF-8 bytes are interpreted as Windows-1252/Latin-1
+        cleaned = cleaned.replace("ΓòÉ", "═");  // Box Drawings Double Horizontal (U+2550)
+        cleaned = cleaned.replace("ΓöÇ", "─");  // Box Drawings Light Horizontal (U+2500)
+        cleaned = cleaned.replace("Γû¬", "▪");  // Black Small Square (U+25AA)
+        cleaned = cleaned.replace("Γöé", "│");  // Box Drawings Light Vertical (U+2502)
+        cleaned = cleaned.replace("ΓöÇΓöÇΓöÇ", "───");  // Multiple dashes
+        
+        // Replace common mojibake patterns from punctuation
+        // Note: Using escape sequences to avoid compilation issues with UTF-8 characters in source
+        cleaned = cleaned.replace("\u00E2\u0080\u009C", "\""); // Left double quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u009D", "\""); // Right double quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0098", "'");  // Left single quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0099", "'");  // Right single quote mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0093", "-");  // En dash mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u0094", "-");  // Em dash mojibake
+        cleaned = cleaned.replace("\u00E2\u0080\u00A6", "..."); // Ellipsis mojibake
+        
+        // Additional dash variants from real-world Git Bash issues
+        cleaned = cleaned.replace("ΓÇæ", "-");  // Dash variant (common in LLM responses)
+        cleaned = cleaned.replace("ΓÇô", "-");  // Dash variant (common in LLM responses)
+        
+        // Additional common patterns
+        cleaned = cleaned.replace("\u00C2", "");     // Stray non-breaking space marker
+        cleaned = cleaned.replace("\u00C3\u00A9", "e");  // e with acute
+        cleaned = cleaned.replace("\u00C3\u00A8", "e");  // e with grave
+        cleaned = cleaned.replace("\u00C3\u00A0", "a");  // a with grave
+        
+        // Remove control characters except newlines and tabs
+        cleaned = cleaned.replaceAll("[\\p{Cntrl}&&[^\n\t\r]]", "");
+        
+        return cleaned.trim();
     }
 
     /**
@@ -57,48 +91,92 @@ public class EncodingHelper {
     }
 
     /**
+     * Sets up UTF-8 encoding for Windows console.
+     * 
+     * This method specifically handles Windows console code page setup.
+     * It should be called before setupUTF8ConsoleStreams().
+     */
+    public static void setupUTF8Output() {
+        if (!isWindows()) {
+            return;
+        }
+
+        try {
+            // Execute chcp 65001 to set console to UTF-8
+            // This is critical for Windows CMD and sometimes helps with GitBash
+            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "chcp", "65001");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            
+            // Consume output to prevent blocking
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                while (reader.readLine() != null) {
+                    // Consume and discard output
+                }
+            }
+            
+            process.waitFor();
+        } catch (Exception e) {
+            // Silently fail - not critical if this doesn't work
+        }
+    }
+
+    /**
      * Sets UTF-8 as the default console encoding (best effort).
      * 
      * This method attempts to configure the console to use UTF-8 encoding.
      * This is critical for Windows/GitBash to display Unicode box-drawing characters correctly.
+     * 
+     * Call this method as early as possible in your application's main() method,
+     * ideally as the very first statement.
      */
     public static void setupUTF8ConsoleStreams() {
         try {
-            // Set system properties to prefer UTF-8
+            // Step 1: Set system properties to prefer UTF-8
             System.setProperty("file.encoding", "UTF-8");
             System.setProperty("sun.jnu.encoding", "UTF-8");
             System.setProperty("console.encoding", "UTF-8");
             
-            // For Windows, try to set console code page to UTF-8 (65001)
+            // Step 2: For Windows, set console code page to UTF-8 (65001)
             if (isWindows()) {
-                try {
-                    // Execute chcp 65001 to set console to UTF-8
-                    // This works for cmd.exe and sometimes for GitBash
-                    ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "chcp", "65001");
-                    pb.redirectErrorStream(true);
-                    Process process = pb.start();
-                    process.waitFor();
-                } catch (Exception e) {
-                    // Ignore - may not work in all environments (e.g., GitBash)
-                }
+                setupUTF8Output();
+                
+                // Additional Windows-specific properties
+                System.setProperty("sun.stdout.encoding", "UTF-8");
+                System.setProperty("sun.stderr.encoding", "UTF-8");
             }
             
-            // Create a new PrintStream with UTF-8 encoding
-            // This ensures all System.out.println() calls use UTF-8
-            // Use FileDescriptor directly for better compatibility with GitBash
-            System.setOut(new java.io.PrintStream(
-                new java.io.FileOutputStream(java.io.FileDescriptor.out),
-                true,  // autoFlush - critical for GitBash
-                StandardCharsets.UTF_8
-            ));
+            // Step 3: Flush existing buffers before reconfiguration
+            System.out.flush();
+            System.err.flush();
             
-            System.setErr(new java.io.PrintStream(
-                new java.io.FileOutputStream(java.io.FileDescriptor.err),
-                true,  // autoFlush - critical for GitBash
-                StandardCharsets.UTF_8
-            ));
+            // Step 4: Wrap existing System.out and System.err with UTF-8 PrintStreams
+            // CRITICAL: Wrap existing streams, don't replace them
+            // This approach is compatible with Java 10+ and works in GitBash
+            System.setOut(new java.io.PrintStream(System.out, true, StandardCharsets.UTF_8));
+            System.setErr(new java.io.PrintStream(System.err, true, StandardCharsets.UTF_8));
             
-            // Configure java.util.logging to use UTF-8
+            // Step 5: Reinitialize Logback to use new System.out/err streams
+            // This is CRITICAL because Logback captures System.out during initialization
+            try {
+                Class<?> loggerFactoryClass = Class.forName("org.slf4j.LoggerFactory");
+                Object iLoggerFactory = loggerFactoryClass.getMethod("getILoggerFactory").invoke(null);
+                
+                Class<?> loggerContextClass = Class.forName("ch.qos.logback.classic.LoggerContext");
+                if (loggerContextClass.isInstance(iLoggerFactory)) {
+                    Object loggerContext = iLoggerFactory;
+                    loggerContextClass.getMethod("reset").invoke(loggerContext);
+                    
+                    Class<?> contextInitializerClass = Class.forName("ch.qos.logback.classic.util.ContextInitializer");
+                    Object contextInitializer = contextInitializerClass.getConstructor(loggerContextClass).newInstance(loggerContext);
+                    contextInitializerClass.getMethod("autoConfig").invoke(contextInitializer);
+                }
+            } catch (Exception e) {
+                // Ignore - Logback might not be present or configuration might fail
+            }
+            
+            // Step 6: Configure java.util.logging to use UTF-8
             try {
                 java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
                 java.util.logging.Handler[] handlers = rootLogger.getHandlers();
@@ -112,6 +190,7 @@ public class EncodingHelper {
             }
         } catch (Exception e) {
             // Silently fail - we'll use default encoding
+            // This is a best-effort attempt to fix encoding issues
         }
     }
 
