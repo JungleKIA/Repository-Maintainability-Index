@@ -82,8 +82,14 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Compile and prepare
-        run: mvn compile test-compile -B
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: target/
+
+      - name: Compile test sources for security scanning
+        run: mvn test-compile -B
       
       - name: Cache Trivy DB
         uses: actions/cache@v3
