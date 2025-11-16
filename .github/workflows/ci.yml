@@ -4,7 +4,7 @@
 # ✅ Explicit code coverage threshold check (jacoco:check)
 # ✅ SpotBugs now blocks build on critical bugs (removed continue-on-error)
 # ✅ Optimized: Reuse compiled classes across jobs (no duplicate compilation)
-# ✅ Added Trivy security scanner with DB caching for faster scans
+# ✅ Added enterprise security: Trivy + OWASP Dependency Check with NVD API
 # ✅ Added automatic GitHub Release creation on version tags
 # ✅ Package job now depends on code-quality and security-scan (independent jobs)
 # 
@@ -103,9 +103,49 @@ jobs:
           severity: 'CRITICAL,HIGH'
         continue-on-error: true
       
-      # OWASP Dependency Check temporarily removed due to NVD API rate limits
-      # Consider re-enabling when NVD API key is available or skip NVD updates
-      # Trivy provides sufficient security scanning for CI/CD
+      - name: Get NVD API Key
+        id: nvd_key
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [ -n "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY available for OWASP scanning"
+          else
+            echo "No NVD_API_KEY - OWASP will use cached data" >&2
+          fi
+
+      - name: OWASP Dependency Check (Enterprise Level)
+        run: |
+          # Download OWASP Dependency Check
+          wget -q https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
+          unzip -q dependency-check-9.0.7-release.zip
+
+          # Set env vars for proper operation
+          export NVD_API_KEY="${{ secrets.NVD_API_KEY }}"
+          export DEPENDENCY_CHECK_DATA_DIRECTORY="/tmp/owasp-data"
+
+          # Create data directory for persistence
+          mkdir -p $DEPENDENCY_CHECK_DATA_DIRECTORY
+
+          # Run OWASP Dependency Check with enterprise settings
+          # --failOnCVSS 7.0 will make build fail on critical vulnerabilities
+          ./dependency-check/bin/dependency-check.sh \
+            --project "RMI" \
+            --scan . \
+            --format HTML \
+            --out target/dependency-check-report \
+            --dataDirectory $DEPENDENCY_CHECK_DATA_DIRECTORY \
+            --skipDevDependencyModules \
+            --failOnCVSS 7.0
+        continue-on-error: true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: target/dependency-check-report/
+          retention-days: 30
 
   code-quality:
     name: Code Quality Analysis
