@@ -47,7 +47,7 @@ jobs:
         with:
           name: compiled-classes
           path: target/
-          retention-days: 1
+          retention-days: 7
       
       - name: Archive test results
         if: always()
@@ -67,6 +67,7 @@ jobs:
 
   security-scan:
     name: Security Scanning
+    needs: [build-and-test]
     runs-on: ubuntu-latest
 
     steps:
