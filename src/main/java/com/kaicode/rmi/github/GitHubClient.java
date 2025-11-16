@@ -19,20 +19,125 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Client for accessing GitHub API to retrieve repository information for maintainability analysis.
+ * <p>
+ * This class provides methods to fetch repository metadata, commits, issues, and other
+ * data needed for calculating maintainability metrics. It uses HTTP calls to GitHub REST API
+ * with proper authentication and error handling.
+ * <p>
+ * Key features:
+ * <ul>
+ *   <li>Fetches repository information (stars, forks, issues, etc.)</li>
+ *   <li>Retrieves recent commit history and metadata</li>
+ *   <li>Checks for presence of files in repository</li>
+ *   <li>Gets contributor and branch counts</li>
+ *   <li>Follows GitHub API rate limits automatically</li>
+ *   <li>Thread-safe for concurrent usage</li>
+ * </ul>
+ * <p>
+ * All methods may throw {@link IOException} for network errors or API failures.
+ * Consider implementing retry logic and caching for production usage.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * GitHubClient client = new GitHubClient("your-github-token");
+ * RepositoryInfo repo = client.getRepository("octocat", "Hello-World");
+ * List<CommitInfo> commits = client.getRecentCommits("octocat", "Hello-World", 10);
+ * }</pre>
+ *
+ * @since 1.0
+ * @see RepositoryInfo
+ * @see CommitInfo
+ */
 public class GitHubClient {
+    /**
+     * Logger for GitHub API operation tracking and error reporting.
+     * <p>
+     * Logs API requests, responses, and errors encountered during
+     * repository data retrieval. Uses SLF4J for consistent logging.
+     */
     private static final Logger logger = LoggerFactory.getLogger(GitHubClient.class);
+
+    /**
+     * Default GitHub API base URL for public API access.
+     * <p>
+     * Value: {@value}
+     */
     private static final String DEFAULT_API_BASE_URL = "https://api.github.com";
+
+    /**
+     * Default HTTP connection timeout in seconds.
+     * <p>
+     * Applied to both connect and read operations. Value: {@value}
+     */
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
+    /**
+     * HTTP client instance configured with timeouts.
+     * <p>
+     * Built with OkHttp library and configured with connection,
+     * read, and write timeouts. Thread-safe for concurrent usage.
+     * <p>
+     * Never null after construction.
+     */
     private final OkHttpClient httpClient;
+
+    /**
+     * JSON parser instance for API response processing.
+     * <p>
+     * Uses Google Gson library for JSON serialization and
+     * deserialization. Thread-safe and reusable.
+     * <p>
+     * Never null after construction.
+     */
     private final Gson gson;
+
+    /**
+     * GitHub personal access token for API authentication.
+     * <p>
+     * When provided, enables access to private repositories and
+     * increases API rate limits. Can be null for public repositories.
+     * <p>
+     * Security note: Token should be kept confidential and not logged.
+     */
     private final String token;
+
+    /**
+     * Base URL for GitHub API endpoints.
+     * <p>
+     * Typically "https://api.github.com" for public GitHub.
+     * Can be customized for GitHub Enterprise installations.
+     * <p>
+     * Never null after construction.
+     */
     private final String apiBaseUrl;
 
+    /**
+     * Creates a GitHub client with default API base URL.
+     * <p>
+     * Configures HTTP client with default timeouts and uses
+     * public GitHub API ("https://api.github.com").
+     *
+     * @param token GitHub personal access token, can be null for public repos
+     * @since 1.0
+     * @see #DEFAULT_API_BASE_URL
+     */
     public GitHubClient(String token) {
         this(token, DEFAULT_API_BASE_URL);
     }
 
+    /**
+     * Creates a GitHub client with custom API base URL.
+     * <p>
+     * Useful for GitHub Enterprise installations or testing with mock servers.
+     * Configures HTTP client with default timeouts.
+     *
+     * @param token GitHub personal access token, can be null for public repos
+     * @param apiBaseUrl base URL for API endpoints, must not be null or empty
+     * @throws IllegalArgumentException if apiBaseUrl is null or empty
+     * @since 1.0
+     */
     public GitHubClient(String token, String apiBaseUrl) {
         this.token = token;
         this.apiBaseUrl = apiBaseUrl;
@@ -43,6 +148,18 @@ public class GitHubClient {
         this.gson = new Gson();
     }
 
+    /**
+     * Creates a GitHub client with custom HTTP client.
+     * <p>
+     * Allows full customization of HTTP client behavior (timeouts, proxies, etc.).
+     * Useful for testing with mock HTTP clients or advanced configurations.
+     *
+     * @param httpClient configured OkHttp client, must not be null
+     * @param token GitHub personal access token, can be null for public repos
+     * @param apiBaseUrl base URL for API endpoints, must not be null or empty
+     * @throws NullPointerException if httpClient is null
+     * @since 1.0
+     */
     public GitHubClient(OkHttpClient httpClient, String token, String apiBaseUrl) {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient must not be null");
         this.token = token;
@@ -50,6 +167,25 @@ public class GitHubClient {
         this.gson = new Gson();
     }
 
+    /**
+     * Retrieves comprehensive repository information from GitHub.
+     * <p>
+     * Fetches metadata about a repository including stars, forks, issues,
+     * wiki status, default branch, size, and other metrics used for
+     * maintainability analysis. Makes a single API call to {@code repos/owner/repo}.
+     * <p>
+     * The returned information is used by multiple maintainability metrics
+     * and provides foundational data for repository assessment.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @return repository information with all available metadata, never null
+     * @throws IOException if network error occurs or repository doesn't exist
+     * @throws NullPointerException if owner or repo parameters are null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     * @see RepositoryInfo
+     */
     public RepositoryInfo getRepository(String owner, String repo) throws IOException {
         String url = String.format("%s/repos/%s/%s", apiBaseUrl, owner, repo);
         String responseBody = executeRequest(url);
@@ -72,6 +208,25 @@ public class GitHubClient {
                 .build();
     }
 
+    /**
+     * Retrieves recent commit history from a repository.
+     * <p>
+     * Fetches the most recent commits from the specified repository, limited by count.
+     * Maximum 100 commits per request. The commits include SHA, message, author, and timestamp.
+     * <p>
+     * This data is used for commit quality analysis and assessing development activity.
+     * Only returns commits from the default branch.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @param count number of commits to retrieve, automatically limited to 100
+     * @return list of recent commits, never null but can be empty, ordered by date descending
+     * @throws IOException if network error occurs or repository doesn't exist
+     * @throws NullPointerException if owner or repo parameters are null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     * @see CommitInfo
+     */
     public List<CommitInfo> getRecentCommits(String owner, String repo, int count) throws IOException {
         String url = String.format("%s/repos/%s/%s/commits?per_page=%d", 
                 apiBaseUrl, owner, repo, Math.min(count, 100));
@@ -96,6 +251,23 @@ public class GitHubClient {
         return result;
     }
 
+    /**
+     * Checks if a specific file exists in the repository.
+     * <p>
+     * Queries the GitHub API to determine if a file exists at the given path.
+     * This is used for checking presence of important project files like README,
+     * LICENSE, CONTRIBUTING, etc., which are factored into maintainability scores.
+     * <p>
+     * Uses the {@code GET repos/owner/repo/contents/path} endpoint.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @param path file path relative to repository root, must not be null
+     * @return {@code true} if file exists, {@code false} if file doesn't exist
+     * @throws NullPointerException if any parameter is null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     */
     public boolean hasFile(String owner, String repo, String path) {
         try {
             String url = String.format("%s/repos/%s/%s/contents/%s", 
@@ -108,6 +280,24 @@ public class GitHubClient {
         }
     }
 
+    /**
+     * Gets the total count of closed issues in the repository.
+     * <p>
+     * Retrieves the number of resolved issues by examining the GitHub pagination
+     * headers. Uses paginated API call to {@code repos/owner/repo/issues} with
+     * {@code state=closed}. If there are many closed issues, may require multiple
+     * requests to determine total count.
+     * <p>
+     * This metric helps assess issue management effectiveness and community activity.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @return total number of closed issues in the repository
+     * @throws IOException if network error occurs or repository doesn't exist
+     * @throws NullPointerException if owner or repo parameters are null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     */
     public int getClosedIssuesCount(String owner, String repo) throws IOException {
         String url = String.format("%s/repos/%s/%s/issues?state=closed&per_page=1", 
                 apiBaseUrl, owner, repo);
@@ -126,6 +316,24 @@ public class GitHubClient {
         return issues.size();
     }
 
+    /**
+     * Gets the total number of branches in the repository.
+     * <p>
+     * Retrieves all branches from the repository by using paginated API call to
+     * {@code repos/owner/repo/branches} with {@code per_page=100}. Returns the
+     * total count of branches (including default and feature branches).
+     * <p>
+     * This metric is used to assess code organization and branching strategy
+     * in maintainability analysis.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @return total number of branches in the repository
+     * @throws IOException if network error occurs or repository doesn't exist
+     * @throws NullPointerException if owner or repo parameters are null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     */
     public int getBranchCount(String owner, String repo) throws IOException {
         String url = String.format("%s/repos/%s/%s/branches?per_page=100", 
                 apiBaseUrl, owner, repo);
@@ -134,6 +342,24 @@ public class GitHubClient {
         return branches.size();
     }
 
+    /**
+     * Gets the total number of contributors to the repository.
+     * <p>
+     * Retrieves contributors list using paginated API call to
+     * {@code repos/owner/repo/contributors} with {@code per_page=100}.
+     * Returns the count of contributors who have made commits to the repository.
+     * <p>
+     * This metric evaluates the community size and contribution diversity,
+     * which are important factors in repository maintainability assessment.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @return total number of contributors to the repository
+     * @throws IOException if network error occurs or repository doesn't exist
+     * @throws NullPointerException if owner or repo parameters are null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     */
     public int getContributorCount(String owner, String repo) throws IOException {
         String url = String.format("%s/repos/%s/%s/contributors?per_page=100", 
                 apiBaseUrl, owner, repo);
