@@ -186,7 +186,8 @@ jobs:
   sbom-generation:
     name: Generate SBOM
     runs-on: ubuntu-latest
-    # Independent job - no needs dependency
+    needs: [build-and-test]
+    # Needs build-and-test for compiled-classes artifact
     
     steps:
       - name: Checkout code
