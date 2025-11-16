@@ -1,13 +1,12 @@
 # CI/CD Pipeline for Repository Maintainability Index
-# 
+#
 # Improvements implemented:
 # ✅ Explicit code coverage threshold check (jacoco:check)
 # ✅ SpotBugs now blocks build on critical bugs (removed continue-on-error)
 # ✅ Optimized: Reuse compiled classes across jobs (no duplicate compilation)
-# ✅ Added OWASP Dependency Check for security vulnerabilities
-# ✅ Added Trivy DB caching for faster scans
+# ✅ Added Trivy security scanner with DB caching for faster scans
 # ✅ Added automatic GitHub Release creation on version tags
-# ✅ Package job now depends on code-quality and security-scan
+# ✅ Package job now depends on code-quality and security-scan (independent jobs)
 # 
 # Required GitHub Branch Protection Rules:
 # - Require status checks: build-and-test, code-quality, security-scan
