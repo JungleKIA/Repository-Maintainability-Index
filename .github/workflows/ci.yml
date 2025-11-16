@@ -110,12 +110,12 @@ jobs:
           wget -q https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
           unzip -q dependency-check-9.0.7-release.zip
           # Skip NVD database updates to avoid rate limiting in CI
+          export DEPENDENCY_CHECK_UPDATE_SKIP="NVDCVE"
           ./dependency-check/bin/dependency-check.sh \
             --project "RMI" \
             --scan . \
             --format HTML \
-            --out target/dependency-check-report \
-            --update-skip =NVDCVE --update-skip =NVD
+            --out target/dependency-check-report
         continue-on-error: true
       
       - name: Upload security reports
