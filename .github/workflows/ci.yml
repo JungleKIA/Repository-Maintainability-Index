@@ -104,27 +104,9 @@ jobs:
           severity: 'CRITICAL,HIGH'
         continue-on-error: true
       
-      - name: OWASP Dependency Check
-        run: |
-          # Download OWASP Dependency Check
-          wget -q https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
-          unzip -q dependency-check-9.0.7-release.zip
-          # Use bundled data to avoid NVD API rate limits in CI
-          ./dependency-check/bin/dependency-check.sh \
-            --project "RMI" \
-            --scan . \
-            --format HTML \
-            --out target/dependency-check-report \
-            --nvdValidForHours 24
-        continue-on-error: true
-      
-      - name: Upload security reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: target/dependency-check-report/
-          retention-days: 30
+      # OWASP Dependency Check temporarily removed due to NVD API rate limits
+      # Consider re-enabling when NVD API key is available or skip NVD updates
+      # Trivy provides sufficient security scanning for CI/CD
 
   code-quality:
     name: Code Quality Analysis
