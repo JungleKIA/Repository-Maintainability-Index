@@ -23,6 +23,7 @@ Each ADR follows this structure:
 | [ADR-003](ADR-003-weighted-metrics-system.md) | Weighted Metrics System | Accepted |
 | [ADR-004](ADR-004-optional-llm-integration.md) | Optional LLM Integration | Accepted |
 | [ADR-005](ADR-005-immutable-domain-models.md) | Immutable Domain Models | Accepted |
+| [ADR-006](ADR-006-docker-containerization.md) | Docker Containerization for Enterprise | ✅ Accepted |
 
 ## Creating New ADRs
 
