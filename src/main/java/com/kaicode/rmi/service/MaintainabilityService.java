@@ -62,7 +62,7 @@ import java.util.*;
  * <p>
  * Performance characteristics:
  * <ul>
- *   <li>Repository size <10k commits: ~2-3 seconds</li>
+ *   <li>Repository size &lt;10k commits: ~2-3 seconds</li>
  *   <li>Repository size 10k-100k commits: ~3-5 seconds</li>
  *   <li>Repository size >100k commits: ~5-8 seconds</li>
  *   <li>Memory footprint: ~50-100MB depending on repository size</li>
@@ -242,7 +242,7 @@ public class MaintainabilityService {
      * <p>
      * Performance profile demonstrates enterprise readiness:
      * <ul>
-     *   <li><strong>Small repositories</strong> (<1k commits): 1-2 seconds</li>
+ *   <li><strong>Small repositories</strong> (&lt;1k commits): 1-2 seconds</li>
      *   <li><strong>Medium repositories</strong> (1k-10k commits): 3-5 seconds</li>
      *   <li><strong>Large repositories</strong> (10k+ commits): 8-15 seconds</li>
      *   <li><strong>Memory usage</strong>: O(repository_size) with bounded growth</li>

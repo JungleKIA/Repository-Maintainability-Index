@@ -24,7 +24,7 @@ import java.io.IOException;
  *
  * @since 1.0
  * @see MetricResult
- * @see MaintainabilityService
+ * @see com.kaicode.rmi.service.MaintainabilityService
  */
 public interface MetricCalculator {
     /**

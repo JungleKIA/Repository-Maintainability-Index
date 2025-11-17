@@ -9,6 +9,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -191,10 +192,10 @@ public class AnalyzeCommand implements Callable<Integer> {
      * </ul>
      *
      * @return exit code: 0 for success, 1 for any error condition
-     * @throws Exception execution failures bubble up for framework handling
+     * @throws Exception if repository access, file reading, or any other errors occur during analysis
      */
     @Override
-    public Integer call() {
+    public Integer call() throws Exception {
         try {
             String[] parts = repository.split("/");
             if (parts.length != 2) {
@@ -252,8 +253,12 @@ public class AnalyzeCommand implements Callable<Integer> {
             }
 
             return 0;
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            return 1;
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
             return 1;
         }

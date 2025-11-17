@@ -28,7 +28,7 @@ import java.util.Objects;
  * }</pre>
  *
  * @since 1.0
- * @see GitHubClient#getRecentCommits(String, String, int)
+ * @see com.kaicode.rmi.github.GitHubClient#getRecentCommits(String, String, int)
  */
 public class CommitInfo {
     private final String sha;

@@ -34,7 +34,7 @@ import java.util.Objects;
  *   <tr><td>75-89</td><td>GOOD</td><td>Strong maintainability</td></tr>
  *   <tr><td>60-74</td><td>FAIR</td><td>Acceptable with room for improvement</td></tr>
  *   <tr><td>40-59</td><td>POOR</td><td>Needs significant attention</td></tr>
- *   <tr><td><40</td><td>CRITICAL</td><td>Immediate action required</td></tr>
+  *   <tr><td>&lt;40</td><td>CRITICAL</td><td>Immediate action required</td></tr>
  * </table>
  *
  * @since 1.0
@@ -126,7 +126,7 @@ public class MaintainabilityReport {
      *   <li>GOOD: Score ≥ 75 - Strong maintainability</li>
      *   <li>FAIR: Score ≥ 60 - Acceptable with room for improvement</li>
      *   <li>POOR: Score ≥ 40 - Needs significant attention</li>
-     *   <li>CRITICAL: Score < 40 - Immediate action required</li>
+ *   <li>CRITICAL: Score &lt;40 - Immediate action required</li>
      * </ul>
      *
      * @return categorical rating based on score thresholds, never null
