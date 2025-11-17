@@ -1,0 +1,66 @@
+# Build artifacts
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Version control
+.git/
+.gitignore
+
+# Documentation (not needed in container)
+docs/
+*.md
+!README.md
+
+# Test resources (optional)
+src/test/
+
+# Dev environment files
+.env*
+.env.local
+
+# Log files
+*.log
+logs/
+
+# Docker files themselves
+Dockerfile*
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+
+# Maven local repository (use build cache instead)
+.m2/
+
+# CI/CD artifacts not needed in image
+.github/
+
+# Node modules (for frontend if any)
+node_modules/
+
+# Gradle (if any)
+.gradle/
+build/
+
+# CI directories
+.github/
