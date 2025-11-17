@@ -3,26 +3,26 @@ package com.kaicode.rmi.model;
 import java.util.Objects;
 
 /**
- * Результаты расчета конкретной метрики поддерживаемости репозитория.
+ * Results of calculating a specific repository maintainability metric.
  * <p>
- * Этот класс содержит полную информацию о результате вычисления одной метрики,
- * включая оценку, вес, описание и дополнительные детали. Используется всеми
- * реализациями {@link com.kaicode.rmi.metrics.MetricCalculator} для упаковки
- * результатов анализа в структурированный формат.
+ * This class contains complete information about the result of calculating one metric,
+ * including the score, weight, description, and additional details. Used by all
+ * implementations of {@link com.kaicode.rmi.metrics.MetricCalculator} to package
+ * analysis results into a structured format.
  * <p>
- * Результаты метрики включают:
+ * Metric results include:
  * <ul>
- *   <li>Имя метрики для идентификации</li>
- *   <li>Оценку в диапазоне 0-100 (выше = лучше)</li>
- *   <li>Вес важности в диапазоне 0.0-1.0</li>
- *   <li>Краткое описание того, что измеряет метрика</li>
- *   <li>Подробные детали расчетов и объяснения</li>
+ *   <li>Metric name for identification</li>
+ *   <li>Score in range 0-100 (higher = better)</li>
+ *   <li>Importance weight in range 0.0-1.0</li>
+ *   <li>Brief description of what the metric measures</li>
+ *   <li>Detailed calculation details and explanations</li>
  * </ul>
  * <p>
- * Экземпляры неизменяемы и потокобезопасны.
- * Идентичность основана на имени, оценке и весе метрики.
+ * Instances are immutable and thread-safe.
+ * Identity is based on metric name, score, and weight.
  * <p>
- * Использование:
+ * Usage:
  * <pre>{@code
  * MetricResult result = MetricResult.builder()
  *     .name("Commit Quality")
@@ -45,13 +45,13 @@ public class MetricResult {
     private final String details;
 
     /**
-     * Приватный конструктор для создания неизменяемых экземпляров MetricResult.
+     * Private constructor for creating immutable MetricResult instances.
      * <p>
-     * Вызывается исключительно {@link Builder#build()} для создания
-     * проверенных, неизменяемых объектов результатов метрики.
-     * Все финальные поля присваиваются из проверенного состояния билдера.
+     * Called exclusively by {@link Builder#build()} to create validated,
+     * immutable metric result objects. All final fields are assigned from
+     * the validated builder state.
      *
-     * @param builder билдер с проверенными значениями полей
+     * @param builder the builder containing validated field values
      */
     private MetricResult(Builder builder) {
         this.name = builder.name;
@@ -62,88 +62,87 @@ public class MetricResult {
     }
 
     /**
-     * Возвращает имя метрики.
+     * Gets the metric name.
      * <p>
-     * Человеко-читаемое имя, которое идентифицирует метрику.
-     * Используется для отображения в отчетах и интерфейсе.
+     * Human-readable name that identifies the metric.
+     * Used for display in reports and interfaces.
      *
-     * @return имя метрики, никогда не null
+     * @return the metric name, never null
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Возвращает оценку метрики.
+     * Gets the metric score.
      * <p>
-     * Значение оценки в диапазоне 0-100, где большее значение
-     * указывает на лучшее состояние метрики. 100 = идеально.
+     * Score value in range 0-100, where higher value
+     * indicates better metric state. 100 = perfect.
      *
-     * @return оценка в диапазоне 0.0 до 100.0
+     * @return score in range 0.0 to 100.0
      */
     public double getScore() {
         return score;
     }
 
     /**
-     * Возвращает вес важности метрики.
+     * Gets the metric importance weight.
      * <p>
-     * Вес показывает относительную важность этой метрики в общем
-     * расчете поддерживаемости. Диапазон 0.0-1.0, где 1.0 наиболее важно.
+     * Weight indicates relative importance of this metric in the overall
+     * maintainability calculation. Range 0.0-1.0, where 1.0 is most important.
      *
-     * @return вес метрики в диапазоне 0.0 до 1.0
+     * @return metric weight in range 0.0 to 1.0
      */
     public double getWeight() {
         return weight;
     }
 
     /**
-     * Возвращает краткое описание метрики.
+     * Gets the brief metric description.
      * <p>
-     * Описание объясняет, что именно эта метрика измеряет
-     * и какие аспекты качества репозитория оценивает.
+     * Description explains what this metric specifically measures
+     * and what repository quality aspects it evaluates.
      *
-     * @return описание метрики, может быть null
+     * @return metric description, may be null
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Возвращает подробные детали расчетов метрики.
+     * Gets the detailed calculation details.
      * <p>
-     * Содержит дополнительную информацию о том, как была рассчитана
-     * оценка, какие данные анализировались и конкретные результаты.
+     * Contains additional information about how the score was calculated,
+     * what data was analyzed, and specific results.
      *
-     * @return детали расчетов, могут быть null
+     * @return calculation details, may be null
      */
     public String getDetails() {
         return details;
     }
 
     /**
-     * Вычисляет взвешенную оценку метрики.
+     * Calculates the weighted metric score.
      * <p>
-     * Взвешенная оценка = оценка × вес. Этот показатель отражает
-     * вклад данной метрики в общую оценку поддерживаемости.
-     * Используется для агрегации результатов всех метрик.
+     * Weighted score = score × weight. This value reflects
+     * the contribution of this metric to the overall maintainability score.
+     * Used for aggregating results of all metrics.
      *
-     * @return взвешенная оценка ({@code score × weight})
+     * @return weighted score ({@code score × weight})
      */
     public double getWeightedScore() {
         return score * weight;
     }
 
     /**
-     * Сравнивает этот результат метрики с другим объектом на равенство.
+     * Compares this metric result with another object for equality.
      * <p>
-     * Два объекта MetricResult считаются равными, если они имеют одинаковые
-     * значения имени, оценки и веса. Другие поля (описание, детали) не
-     * учитываются для поддержки стабильности идентичности при изменении
-     * деталей расчетов.
+     * Two MetricResult objects are considered equal if they have identical
+     * values for name, score, and weight. Other fields (description, details) are
+     * not considered to support identity stability when calculation details change.
      *
-     * @param o объект для сравнения
-     * @return true если объекты представляют один и тот же результат метрики
+     * @param o the object to compare with
+     * @return true if objects represent the same metric result
      */
     @Override
     public boolean equals(Object o) {
@@ -156,12 +155,12 @@ public class MetricResult {
     }
 
     /**
-     * Возвращает значение хэш-кода для этого результата метрики.
+     * Returns a hash code value for this metric result.
      * <p>
-     * Хэш-код вычисляется на основе имени, оценки и веса,
-     * в соответствии с реализацией метода equals.
+     * Hash code is computed from name, score, and weight fields,
+     * consistent with the equals method implementation.
      *
-     * @return хэш-код для этого результата метрики
+     * @return hash code for this metric result
      */
     @Override
     public int hashCode() {
@@ -169,13 +168,13 @@ public class MetricResult {
     }
 
     /**
-     * Создает новый экземпляр Builder для конструирования объектов MetricResult.
+     * Creates a new Builder instance for constructing MetricResult objects.
      * <p>
-     * Этот фабричный метод предоставляет точку входа для паттерна builder,
-     * позволяя fluent построение неизменяемых экземпляров MetricResult
-     * с правильной валидацией.
+     * This factory method provides the entry point for the builder pattern,
+     * allowing fluent construction of immutable MetricResult instances
+     * with proper validation.
      *
-     * @return новый экземпляр Builder для цепочного вызова методов
+     * @return a new Builder instance for method chaining
      * @since 1.0
      */
     public static Builder builder() {
@@ -183,14 +182,14 @@ public class MetricResult {
     }
 
     /**
-     * Класс Builder для конструирования неизменяемых экземпляров MetricResult.
+     * Builder class for constructing immutable MetricResult instances.
      * <p>
-     * Предоставляет fluent API для установки всех полей результатов метрики
-     * перед созданием финального неизменяемого экземпляра. Builder валидирует
-     * обязательные поля (имя) и диапазоны значений во время сборки.
+     * Provides a fluent API for setting all metric result fields
+     * before creating the final immutable instance. The builder validates
+     * required fields (name) and value ranges during build.
      * <p>
-     * Поле имени обязательно, другие поля опциональны.
-     * Неустановленные опциональные поля получат значения по умолчанию.
+     * Name field is required, other fields are optional.
+     * Unset optional fields will receive default values.
      *
      * @since 1.0
      */
@@ -202,13 +201,13 @@ public class MetricResult {
         private String details;
 
         /**
-         * Устанавливает имя метрики (обязательное поле).
+         * Sets the metric name (required field).
          * <p>
-         * Человеко-читаемое имя должно однозначно идентифицировать метрику.
-         * Это поле является обязательным и не может быть null.
+         * Human-readable name should uniquely identify the metric.
+         * This field is required and cannot be null.
          *
-         * @param name имя метрики, должно быть не null и не пустым
-         * @return этот экземпляр builder для цепочного вызова
+         * @param name the metric name, must not be null or empty
+         * @return this builder instance for method chaining
          */
         public Builder name(String name) {
             this.name = name;
@@ -216,14 +215,14 @@ public class MetricResult {
         }
 
         /**
-         * Устанавливает оценку метрики.
+         * Sets the metric score.
          * <p>
-         * Значение должно быть в диапазоне 0.0 до 100.0, где большее значение
-         * указывает на лучшее состояние метрики. 100.0 = идеально.
-         * Значение проверяется во время сборки.
+         * Value should be in range 0.0 to 100.0, where higher value
+         * indicates better metric state. 100.0 = perfect.
+         * Value is validated during build.
          *
-         * @param score оценка метрики в диапазоне 0.0 до 100.0
-         * @return этот экземпляр builder для цепочного вызова
+         * @param score the metric score in range 0.0 to 100.0
+         * @return this builder instance for method chaining
          */
         public Builder score(double score) {
             this.score = score;
@@ -231,14 +230,14 @@ public class MetricResult {
         }
 
         /**
-         * Устанавливает вес важности метрики.
+         * Sets the metric importance weight.
          * <p>
-         * Вес показывает относительную важность метрики в общем расчете.
-         * Должен быть в диапазоне 0.0 до 1.0, где 1.0 означает максимальную важность.
-         * Значение проверяется во время сборки.
+         * Weight indicates relative importance of metric in overall calculation.
+         * Should be in range 0.0 to 1.0, where 1.0 means maximum importance.
+         * Value is validated during build.
          *
-         * @param weight вес метрики в диапазоне 0.0 до 1.0
-         * @return этот экземпляр builder для цепочного вызова
+         * @param weight the metric weight in range 0.0 to 1.0
+         * @return this builder instance for method chaining
          */
         public Builder weight(double weight) {
             this.weight = weight;
@@ -246,13 +245,13 @@ public class MetricResult {
         }
 
         /**
-         * Устанавливает краткое описание метрики (опциональное поле).
+         * Sets the brief metric description (optional field).
          * <p>
-         * Описание должно объяснять, что измеряет эта метрика
-         * и какие аспекты качества репозитория оцениваются.
+         * Description should explain what this metric measures
+         * and what repository quality aspects it evaluates.
          *
-         * @param description краткое описание метрики, может быть null
-         * @return этот экземпляр builder для цепочного вызова
+         * @param description the metric description, may be null
+         * @return this builder instance for method chaining
          */
         public Builder description(String description) {
             this.description = description;
@@ -260,13 +259,13 @@ public class MetricResult {
         }
 
         /**
-         * Устанавливает подробные детали расчетов (опциональное поле).
+         * Sets the detailed calculation details (optional field).
          * <p>
-         * Дополнительная информация о том, как была рассчитана оценка,
-         * какие данные анализировались и конкретные результаты анализа.
+         * Additional information about how the score was calculated,
+         * what data was analyzed, and specific analysis results.
          *
-         * @param details детали расчетов, могут быть null
-         * @return этот экземпляр builder для цепочного вызова
+         * @param details the calculation details, may be null
+         * @return this builder instance for method chaining
          */
         public Builder details(String details) {
             this.details = details;
@@ -274,18 +273,18 @@ public class MetricResult {
         }
 
         /**
-         * Собирает и валидирует новый экземпляр MetricResult.
+         * Builds and validates a new MetricResult instance.
          * <p>
-         * Создает неизменяемый MetricResult из текущего состояния builder.
-         * Обязательные поля (имя) проверяются на наличие, а числовые поля
-         * проверяются на допустимые диапазоны.
+         * Creates an immutable MetricResult from the current builder state.
+         * Required fields (name) are validated for presence, and numeric fields
+         * are validated for acceptable ranges.
          * <p>
-         * Возвращаемый экземпляр потокобезопасен и может безопасно передаваться.
+         * The returned instance is thread-safe and can be safely shared.
          *
-         * @return новый неизменяемый экземпляр MetricResult
-         * @throws NullPointerException если имя равно null
-         * @throws IllegalArgumentException если оценка вне диапазона 0-100
-         *                                  или вес вне диапазона 0.0-1.0
+         * @return a new immutable MetricResult instance
+         * @throws NullPointerException if name is null
+         * @throws IllegalArgumentException if score is outside 0-100 range
+         *                                  or weight is outside 0.0-1.0 range
          */
         public MetricResult build() {
             Objects.requireNonNull(name, "name must not be null");
