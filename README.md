@@ -46,6 +46,128 @@ mvn clean package
 
 This will create an executable JAR file in the `target/` directory.
 
+## 🐳 Docker Installation
+
+For enterprise deployments, containerized installation is the preferred method.
+
+### Prerequisites
+
+- Docker Engine 20.10 or higher
+- Docker Compose Plugin (optional, for multi-container setup)
+
+### Option 1: Build from Source
+
+```bash
+# Clone and build Docker image
+git clone <repository-url>
+cd repo-maintainability-index
+
+# Build Docker image
+docker build -t rmi-app .
+
+# Run container
+docker run --rm -e GITHUB_TOKEN=your_token rmi-app analyze owner/repo
+```
+
+### Option 2: Use Pre-built Image (Recommended)
+
+When available on GitHub Container Registry:
+
+```bash
+# Pull latest image
+docker pull ghcr.io/junglekia/repository-maintainability-index:latest
+
+# Run analysis
+docker run --rm \
+  -e GITHUB_TOKEN=your_token \
+  -e OPENROUTER_API_KEY=your_llm_key \
+  ghcr.io/junglekia/repository-maintainability-index:latest \
+  analyze owner/repo --llm
+```
+
+### Option 3: Docker Compose (Development/Testing)
+
+```bash
+# Start with compose (includes volume mounts)
+docker-compose up -d rmi
+
+# Run analysis
+docker-compose exec rmi analyze owner/repo --llm
+```
+
+### Environment Configuration for Docker
+
+Create a `.env` file:
+
+```bash
+GITHUB_TOKEN=your_github_token_here
+OPENROUTER_API_KEY=your_llm_key_here
+LOG_LEVEL=INFO
+```
+
+Run with environment file:
+```bash
+docker run --rm --env-file .env rmi-app analyze owner/repo --llm
+```
+
+### Docker Launcher Scripts
+
+Use provided scripts for easy Docker deployment:
+
+```bash
+# Build and run
+./run-docker.sh build
+./run-docker.sh run analyze owner/repo --llm
+
+# Or directly
+./run-docker.sh analyze owner/repo --llm
+```
+
+### Production Deployment
+
+For production, use:
+
+```yaml
+# Kubernetes deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rmi-application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rmi
+  template:
+    metadata:
+      labels:
+        app: rmi
+    spec:
+      containers:
+      - name: rmi
+        image: ghcr.io/junglekia/repository-maintainability-index:latest
+        env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: rmi-secrets
+              key: github-token
+        ports:
+        - containerPort: 8080
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+```
+
+### Docker Image Features
+
+- ✅ **Multi-stage build** - Optimized image size
+- ✅ **Security hardened** - Non-root user, minimal image
+- ✅ **Health checks** - Automatic container monitoring
+- ✅ **Resource limits** - CPU/memory constraints
+- ✅ **UTF-8 support** - Proper Unicode handling
+- ✅ **ARM64/AMD64** - Multi-platform support
+
 ## Environment Configuration
 
 The application supports configuration via environment variables. You can set them directly or use a `.env` file in the project root.

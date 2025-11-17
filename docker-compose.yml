@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  rmi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: repository-maintainability-index
+    restart: unless-stopped
+
+    # Volume mounts for logs and data
+    volumes:
+      - ./logs:/app/logs:rw
+      - ./.env:/app/.env:ro
+
+    # Environment variables
+    env_file:
+      - .env
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - TZ=UTC
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "java", "-jar", "/app/rmi-app.jar", "--help"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Security - read-only root filesystem except for logs
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+
+    # Resource limits for production usage
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Command to run (optional - can be passed at runtime)
+    command: ["--help"]
+
+  # Optional: Add for development with live reload
+  rmi-dev:
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: repository-maintainability-index-dev
+    volumes:
+      - ./logs:/app/logs:rw
+      - ./.env:/app/.env:ro
+    env_file:
+      - .env
+    environment:
+      - JAVA_OPTS=-Xmx1g -Xms512m
+    command: ["--help"]
