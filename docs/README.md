@@ -6,19 +6,28 @@ Welcome to the Repository Maintainability Index documentation.
 
 ### For Users
 - [Main README](../README.md) - Getting started, usage, and features
+- [Quick Start Guide](../QUICK_START.md) - Fast setup guide
 - [Security Best Practices](../SECURITY_BEST_PRACTICES.md) - API key management
 - [LLM Features](../LLM_FEATURES.md) - AI-powered analysis guide
 
-### For Contributors
+### For Contributors & Developers
 - [Implementation Notes](IMPLEMENTATION_NOTES.md) - **START HERE** - Overview of the modernization strategy
 - [Architecture Documentation](architecture/README.md) - System design overview
 - [C4 Architecture Diagrams](architecture/C4_ARCHITECTURE.md) - Visual architecture
 - [Architecture Decision Records](architecture/adr/README.md) - Key decisions and rationale
 - [Modernization Roadmap](MODERNIZATION_ROADMAP.md) - Current and future work
+- [Code Review Report](CODE_REVIEW_REPORT.md) - **NEW** - Comprehensive code quality analysis
 
-### For Decision Makers
-- [Implementation Notes](IMPLEMENTATION_NOTES.md) - Overview of the implementation strategy
+### For Operations & DevOps
+- [Deployment Guide](DEPLOYMENT_GUIDE.md) - **NEW** - Complete deployment instructions
+- [Operations Runbook](OPERATIONS_RUNBOOK.md) - **NEW** - Operational procedures and troubleshooting
+- [API Specification](API_SPECIFICATION.md) - **NEW** - Complete CLI interface documentation
 - [Testing Documentation](TESTING_VERIFICATION.md) - Comprehensive testing results
+
+### For Decision Makers & Architects
+- [Production Analysis Report](PRODUCTION_ANALYSIS_REPORT.md) - **NEW** - Comprehensive production-readiness analysis
+- [Implementation Notes](IMPLEMENTATION_NOTES.md) - Overview of the implementation strategy
+- [Code Review Report](CODE_REVIEW_REPORT.md) - **NEW** - Quality metrics and technical debt analysis
 
 ## 🎯 Quick Start
 
@@ -43,7 +52,12 @@ Welcome to the Repository Maintainability Index documentation.
 
 | Document | Purpose | Audience | Priority |
 |----------|---------|----------|----------|
+| **[Production Analysis Report](PRODUCTION_ANALYSIS_REPORT.md)** | **Complete production readiness analysis** | **Decision Makers** | 🔴 **Must Read** |
 | [Implementation Notes](IMPLEMENTATION_NOTES.md) | What we did and why | All | 🔴 Must Read |
+| **[Code Review Report](CODE_REVIEW_REPORT.md)** | **Comprehensive code quality analysis** | **Tech Leads** | 🔴 **Must Read** |
+| **[Operations Runbook](OPERATIONS_RUNBOOK.md)** | **Operational procedures** | **DevOps/SRE** | 🟡 **Important** |
+| **[Deployment Guide](DEPLOYMENT_GUIDE.md)** | **Complete deployment instructions** | **DevOps** | 🟡 **Important** |
+| **[API Specification](API_SPECIFICATION.md)** | **CLI interface documentation** | **Developers** | 🟡 **Important** |
 | [C4 Architecture](architecture/C4_ARCHITECTURE.md) | System design and structure | Developers | 🟡 Important |
 | [ADR Index](architecture/adr/README.md) | Design decisions with rationale | Developers | 🟡 Important |
 | [Modernization Roadmap](MODERNIZATION_ROADMAP.md) | Current status and future work | All | 🟢 Reference |
