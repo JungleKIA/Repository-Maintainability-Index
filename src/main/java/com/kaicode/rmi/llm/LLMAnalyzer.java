@@ -14,16 +14,91 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Orchestrator for Large Language Model (LLM) analysis of repository quality.
+ * <p>
+ * This class coordinates comprehensive AI-powered analysis of repository aspects by integrating
+ * with LLM services. It analyzes README documentation, commit message patterns, community
+ * health indicators, and generates actionable AI recommendations for repository improvement.
+ * <p>
+ * The analyzer orchestrates multiple specialized analysis workflows:
+ * <ul>
+ *   <li><strong>README Analysis</strong>: Evaluates documentation quality, clarity, and completeness</li>
+ *   <li><strong>Commit Analysis</strong>: Assesses commit message consistency and informativeness</li>
+ *   <li><strong>Community Analysis</strong>: Reviews community responsiveness, helpfulness, and tone</li>
+ *   <li><strong>AI Recommendations</strong>: Generates prioritized improvement suggestions with impact scores</li>
+ * </ul>
+ * <p>
+ * The analyzer implements robust fallback strategies with predefined analysis results when
+ * LLM services are unavailable, ensuring consistent analysis quality. All text processing
+ * includes Windows compatibility encoding cleanup.
+ * <p>
+ * Confidence scoring provides transparency into the reliability of AI-generated insights,
+ * and token usage tracking enables cost monitoring and performance optimization.
+ * <p>
+ * Typical analysis workflow:
+ * <pre>{@code
+ * LLMAnalyzer analyzer = new LLMAnalyzer(llmClient);
+ * LLMAnalysis result = analyzer.analyze(githubClient, "owner", "repository");
+ * double confidence = result.getConfidence();
+ * List<AIRecommendation> recommendations = result.getRecommendations();
+ * }</pre>
+ *
+ * @since 1.0
+ * @see LLMClient
+ * @see LLMAnalysis
+ * @see GitHubClient
+ * @see com.kaicode.rmi.util.EncodingHelper#cleanTextForWindows(String)
+ */
 public class LLMAnalyzer {
     private static final Logger logger = LoggerFactory.getLogger(LLMAnalyzer.class);
     private final LLMClient llmClient;
     private final Gson gson;
 
+    /**
+     * Creates a new LLM analyzer instance with the specified LLM client.
+     * <p>
+     * Initializes the analyzer with the provided LLM client for AI-powered analysis.
+     * The analyzer will use this client to make LLM requests for repository analysis.
+     *
+     * @param llmClient the LLM client for AI analysis requests, must not be null
+     * @throws NullPointerException if llmClient is null
+     * @since 1.0
+     */
     public LLMAnalyzer(LLMClient llmClient) {
         this.llmClient = llmClient;
         this.gson = new Gson();
     }
 
+    /**
+     * Performs comprehensive LLM-powered analysis of a GitHub repository.
+     * <p>
+     * Orchestrates complete AI-driven repository assessment by analyzing multiple aspects:
+     * README documentation quality, commit message patterns, community health indicators,
+     * and generates prioritized recommendations. Provides transparency with confidence
+     * scoring and token usage tracking.
+     * <p>
+     * The analysis process includes:
+     * <ol>
+     *   <li>Fetch README content from repository</li>
+     *   <li>Analyze README for clarity, completeness, and newcomer-friendliness</li>
+     *   <li>Retrieve and analyze recent commit messages for consistency</li>
+     *   <li>Assess community health based on repository metadata</li>
+     *   <li>Generate AI recommendations for repository improvement</li>
+     *   <li>Calculate overall analysis confidence score</li>
+     *   <li>Aggregate all results into comprehensive analysis report</li>
+     * </ol>
+     * <p>
+     * Implements fault-tolerant design with fallback to predefined analysis results
+     * if LLM services are unavailable, ensuring consistent analysis quality.
+     *
+     * @param githubClient authenticated GitHub client for repository data access, never null
+     * @param owner repository owner name, never null
+     * @param repo repository name, never null
+     * @return comprehensive LLM analysis results containing all assessment components, never null
+     * @throws IOException if network errors prevent repository data access
+     * @since 1.0
+     */
     public LLMAnalysis analyze(GitHubClient githubClient, String owner, String repo) throws IOException {
         logger.info("Starting LLM analysis for {}/{}", owner, repo);
         
