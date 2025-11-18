@@ -3,7 +3,7 @@
 **Application:** Repository Maintainability Index (RMI)  
 **Version:** 1.0.0  
 **API Type:** Command-Line Interface (CLI) + JSON Output  
-**Last Updated:** 2024
+**Last Updated:** November 18, 2025
 
 ---
 
@@ -889,5 +889,5 @@ jobs:
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** 2024  
+**Last Updated:** November 18, 2025  
 **Maintained By:** Engineering Team

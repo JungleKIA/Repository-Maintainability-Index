@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved documentation organization and structure
 - Enhanced README with production deployment information
 
-## [1.0.0] - 2024
+## [1.0.0] - November 18, 2025
 
 ### Added
 - **Core Functionality**

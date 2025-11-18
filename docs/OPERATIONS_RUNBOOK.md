@@ -2,7 +2,7 @@
 
 **Service:** Repository Maintainability Index (RMI)  
 **Version:** 1.0.0  
-**Last Updated:** 2024  
+**Last Updated:** November 18, 2025  
 **On-Call Team:** DevOps/Platform Engineering
 
 ---
@@ -1052,6 +1052,6 @@ docker inspect rmi-app
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** 2024  
+**Last Updated:** November 18, 2025  
 **Next Review:** Quarterly  
 **Owner:** DevOps/Platform Engineering Team

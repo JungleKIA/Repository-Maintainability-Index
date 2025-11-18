@@ -2,7 +2,7 @@
 
 **Application:** Repository Maintainability Index (RMI)  
 **Version:** 1.0.0  
-**Last Updated:** 2024  
+**Last Updated:** November 18, 2025  
 **Target Audience:** DevOps Engineers, SREs
 
 ---
@@ -1134,6 +1134,6 @@ curl http://localhost:8080/health/ready
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** 2024  
+**Last Updated:** November 18, 2025  
 **Next Review:** Quarterly  
 **Owner:** DevOps/SRE Team
