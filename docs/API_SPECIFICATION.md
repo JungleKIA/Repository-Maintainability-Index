@@ -1,7 +1,7 @@
 # API Specification: Repository Maintainability Index
 
 **Version**: 1.0.0  
-**Last Updated**: November 17, 2024  
+**Last Updated**: January 17, 2025  
 **Type**: Command-Line Interface (CLI)  
 **Format**: Human-readable text and JSON output
 
@@ -549,7 +549,7 @@ Suggestion: Check your GitHub token:
 ```
 Error: GitHub API rate limit exceeded
 Limit: 60/hour (unauthenticated)
-Reset at: 2024-11-17 15:30:00 UTC
+Reset at: 2025-01-17 15:30:00 UTC
 
 Suggestion: Use GitHub token for higher rate limits (5000/hour):
   export GITHUB_TOKEN="your-token"
@@ -717,7 +717,7 @@ Response:
   "status": "success",
   "data": { ... },
   "metadata": {
-    "analyzedAt": "2024-11-17T12:00:00Z",
+    "analyzedAt": "2025-01-17T12:00:00Z",
     "version": "1.0.0"
   }
 }
@@ -728,5 +728,5 @@ Response:
 ---
 
 **Document Version**: 1.0  
-**Last Reviewed**: November 17, 2024  
+**Last Reviewed**: January 17, 2025  
 **Next Review**: Q1 2025

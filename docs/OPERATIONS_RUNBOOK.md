@@ -1,7 +1,7 @@
 # Operations Runbook: Repository Maintainability Index
 
 **Version**: 1.0.0  
-**Last Updated**: November 17, 2024  
+**Last Updated**: January 17, 2025  
 **On-Call Contact**: SRE Team  
 **Escalation**: Development Team Lead
 
@@ -365,7 +365,7 @@ curl -H "Authorization: Bearer $GITHUB_TOKEN" \
 ```
 Error: GitHub API rate limit exceeded
 Limit: 60/hour (unauthenticated)
-Reset at: 2024-11-17 15:30:00 UTC
+Reset at: 2025-01-17 15:30:00 UTC
 ```
 
 **Possible Causes**:
@@ -820,6 +820,6 @@ curl -I https://api.github.com/zen
 ---
 
 **Document Version**: 1.0  
-**Last Updated**: November 17, 2024  
+**Last Updated**: January 17, 2025  
 **Next Review**: Q1 2025  
 **Document Owner**: SRE Team

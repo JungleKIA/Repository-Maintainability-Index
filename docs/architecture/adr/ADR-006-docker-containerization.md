@@ -1,7 +1,7 @@
 # ADR-006: Docker Containerization for Enterprise Deployments
 
 **Status**: ✅ Accepted  
-**Date**: 2024-11-17  
+**Date**: 2025-01-17  
 **Deciders**: Architecture Team, DevOps Team  
 **Related**: ADR-001 (Monolithic CLI Architecture)
 
@@ -416,13 +416,13 @@ spec:
 
 | Date | Reviewer | Decision |
 |------|----------|----------|
-| 2024-11-17 | Architecture Team | ✅ Approved |
-| 2024-11-17 | DevOps Team | ✅ Approved |
-| 2024-11-17 | Security Team | ✅ Approved (with security hardening) |
+| 2025-01-17 | Architecture Team | ✅ Approved |
+| 2025-01-17 | DevOps Team | ✅ Approved |
+| 2025-01-17 | Security Team | ✅ Approved (with security hardening) |
 
 ---
 
 **Status**: ✅ Accepted  
 **Implementation**: ✅ Complete (PR #14)  
-**Last Updated**: 2024-11-17  
+**Last Updated**: 2025-01-17  
 **Next Review**: 2025-Q2 (evaluate distroless/native image options)
