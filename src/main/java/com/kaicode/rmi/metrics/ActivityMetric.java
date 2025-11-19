@@ -103,19 +103,26 @@ public class ActivityMetric implements MetricCalculator {
         String sha = commits.get(0).getSha().substring(0, Math.min(commits.get(0).getSha().length(), 7));
 
         // Format with optional time unit
-        String timeUnit;
-        long timeValue;
+        String timeString;
         if (daysSinceLastCommit < 1) {
-            timeValue = ChronoUnit.HOURS.between(mostRecentCommit, now);
-            timeUnit = "hour";
+            long hoursValue = ChronoUnit.HOURS.between(mostRecentCommit, now);
+            timeString = hoursValue == 1 ? "1 hour" : hoursValue + " hours";
+        } else if (daysSinceLastCommit < 365) {
+            timeString = daysSinceLastCommit == 1 ? "1 day" : daysSinceLastCommit + " days";
         } else {
-            timeValue = daysSinceLastCommit;
-            timeUnit = "day";
+            long years = daysSinceLastCommit / 365;
+            long remainingDays = daysSinceLastCommit % 365;
+            String yearsString = years == 1 ? "1 year" : years + " years";
+            if (remainingDays > 0) {
+                String daysString = remainingDays == 1 ? "1 day" : remainingDays + " days";
+                timeString = yearsString + " and " + daysString;
+            } else {
+                timeString = yearsString;
+            }
         }
-        String timeString = timeValue == 1 ? timeUnit : timeUnit + "s";
 
-        details = String.format("Last commit: %s - %s * %s * %d %s ago. Recent activity: %d commits",
-                author, shortMessage, sha, timeValue, timeString, commits.size());
+        details = String.format("Last commit: %s - %s * %s * %s ago. Recent activity: %d commits",
+                author, shortMessage, sha, timeString, commits.size());
 
         logger.info("Activity score for {}/{}: {}", owner, repo, score);
 
