@@ -93,7 +93,7 @@ public class ActivityMetric implements MetricCalculator {
             if (shortMessage.length() > 70) {
                 shortMessage = shortMessage.substring(0, 67) + "...";
             }
-            String sha = commits.get(0).getSha().substring(0, 7);
+            String sha = commits.get(0).getSha().substring(0, Math.min(commits.get(0).getSha().length(), 7));
             details = String.format("Last commit: %s - %s * %s * %d hour%s ago. Recent activity: %d commits",
                     commits.get(0).getAuthor(), shortMessage, sha, hoursSinceLastCommit, hoursSinceLastCommit == 1 ? "" : "s", commits.size());
         } else {
