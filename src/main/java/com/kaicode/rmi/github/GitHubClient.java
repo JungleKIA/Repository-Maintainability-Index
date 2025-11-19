@@ -192,6 +192,23 @@ public class GitHubClient {
 
         JsonObject json = gson.fromJson(responseBody, JsonObject.class);
 
+        int openIssues;
+        try {
+            openIssues = this.getOpenIssuesCount(owner, repo);
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("422")) {
+                logger.warn("Large dataset detected for {}/{}, estimating open issues from API response", owner, repo);
+                // For large repositories, use open_issues count from repository API (may be approximate)
+                openIssues = json.get("open_issues_count").getAsInt();
+                if (openIssues >= 1000) {
+                    logger.info("Using approximiate open issues for {}/{}: {} (actual count may be higher)", owner, repo, openIssues);
+                }
+            } else {
+                throw e; // Re-throw non-422 errors
+            }
+        }
+        logger.info("Retrieved {}/{}, open issues: {}", owner, repo, openIssues);
+
         return RepositoryInfo.builder()
                 .owner(owner)
                 .name(repo)
@@ -199,7 +216,7 @@ public class GitHubClient {
                         ? json.get("description").getAsString() : "")
                 .stars(json.get("stargazers_count").getAsInt())
                 .forks(json.get("forks_count").getAsInt())
-                .openIssues(this.getOpenIssuesCount(owner, repo))
+                .openIssues(openIssues)
                 .lastUpdated(parseDateTime(json.get("updated_at").getAsString()))
                 .hasWiki(json.get("has_wiki").getAsBoolean())
                 .hasIssues(json.get("has_issues").getAsBoolean())

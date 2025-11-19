@@ -142,9 +142,10 @@ public class ReportFormatter {
         String separator = "├" + "─".repeat(width - 2) + "┤";
         String bottomLine = "╚" + "═".repeat(width - 2) + "╝";
 
-        // Header with emoji
+        // Header with emoji and version
         text.append("\n").append(topLine).append("\n");
         text.append(centerText("📊 Repository Maintainability Index Report", width)).append("\n");
+        text.append(centerText("Version " + loadVersion(), width)).append("\n");
         text.append(middleLine).append("\n\n");
 
         // Summary with visual rating
@@ -318,6 +319,27 @@ public class ReportFormatter {
         }
 
         return rec.toString();
+    }
+
+    /**
+     * Loads version information from Maven-filtered properties resource.
+     * <p>
+     * Reads version from version.properties resource that gets filtered
+     * during Maven build process. Returns fallback version if reading fails.
+     *
+     * @return application version string
+     */
+    private static String loadVersion() {
+        try (java.io.InputStream inputStream = ReportFormatter.class.getClassLoader().getResourceAsStream("version.properties")) {
+            if (inputStream != null) {
+                java.util.Properties properties = new java.util.Properties();
+                properties.load(inputStream);
+                return properties.getProperty("version");
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return "1.0.1";
     }
 
     /**

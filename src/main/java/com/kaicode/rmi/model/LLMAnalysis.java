@@ -51,6 +51,7 @@ public class LLMAnalysis {
     private final List<AIRecommendation> recommendations;
     private final double confidence;
     private final int tokensUsed;
+    private final String llmMode;
 
     /**
      * Private constructor for creating immutable LLMAnalysis instances.
@@ -68,6 +69,7 @@ public class LLMAnalysis {
         this.recommendations = new ArrayList<>(builder.recommendations);
         this.confidence = builder.confidence;
         this.tokensUsed = builder.tokensUsed;
+        this.llmMode = builder.llmMode;
     }
 
     /**
@@ -162,6 +164,19 @@ public class LLMAnalysis {
     }
 
     /**
+     * Gets the LLM analysis mode indicating whether real AI or fallback was used.
+     * <p>
+     * Indicates the source of the LLM analysis results, either "REAL" for actual
+     * AI processing or "FALLBACK" for intelligent default values when the API
+     * is unavailable. This provides transparency about analysis reliability.
+     *
+     * @return analysis mode ("REAL" or "FALLBACK"), never null
+     */
+    public String getLlmMode() {
+        return llmMode;
+    }
+
+    /**
      * Builder class for constructing immutable LLMAnalysis instances.
      * <p>
      * Provides a fluent API for setting all analysis fields before creating
@@ -170,7 +185,7 @@ public class LLMAnalysis {
      * <p>
      * Required fields: none<br>
      * Optional fields: readmeAnalysis, commitAnalysis, communityAnalysis,
-     *                 recommendations, confidence, tokensUsed.
+     *                 recommendations, confidence, tokensUsed, llmMode.
      *
      * @since 1.0
      * @see LLMAnalysis
@@ -182,6 +197,7 @@ public class LLMAnalysis {
         private List<AIRecommendation> recommendations = new ArrayList<>();
         private double confidence;
         private int tokensUsed;
+        private String llmMode = "FALLBACK";
 
         /**
          * Sets the README analysis results for this LLM analysis.
@@ -275,6 +291,21 @@ public class LLMAnalysis {
          */
         public Builder tokensUsed(int tokensUsed) {
             this.tokensUsed = tokensUsed;
+            return this;
+        }
+
+        /**
+         * Sets the LLM analysis mode indicating the source of the analysis.
+         * <p>
+         * Configures whether the analysis results come from real AI processing ("REAL")
+         * or fallback intelligent defaults ("FALLBACK") when the API is unavailable.
+         *
+         * @param llmMode analysis mode ("REAL" or "FALLBACK"),
+         *               defaults to "FALLBACK" if not set
+         * @return this builder instance for method chaining
+         */
+        public Builder llmMode(String llmMode) {
+            this.llmMode = Objects.requireNonNullElse(llmMode, "FALLBACK");
             return this;
         }
 

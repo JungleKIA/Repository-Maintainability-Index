@@ -67,7 +67,7 @@ class ActivityMetricTest {
         MetricResult result = metric.calculate(client, "owner", "repo");
 
         assertThat(result.getScore()).isLessThanOrEqualTo(20.0);
-        assertThat(result.getDetails()).contains("OldAuthor").contains("Old commit message").contains("abc123d").contains("days ago");
+        assertThat(result.getDetails()).contains("OldAuthor").contains("Old commit message").contains("abc123d").contains("years");
     }
 
     @Test

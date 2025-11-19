@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -101,29 +102,43 @@ public class LLMAnalyzer {
      */
     public LLMAnalysis analyze(GitHubClient githubClient, String owner, String repo) throws IOException {
         logger.info("Starting LLM analysis for {}/{}", owner, repo);
-        
+
+        String llmMode = "REAL"; // Assume real analysis by default
         int totalTokens = 0;
-        
+        AtomicInteger parseErrors = new AtomicInteger(0); // Count actual parsing failures
+        AtomicInteger apiErrors = new AtomicInteger(0);    // Count API failures (429, network issues)
+
         String readmeContent = fetchReadme(githubClient, owner, repo);
-        LLMAnalysis.ReadmeAnalysis readmeAnalysis = analyzeReadme(readmeContent);
+        LLMAnalysis.ReadmeAnalysis readmeAnalysis = analyzeReadme(readmeContent, apiErrors, parseErrors);
         totalTokens += 500;
-        
+
         List<CommitInfo> commits = githubClient.getRecentCommits(owner, repo, 30);
-        LLMAnalysis.CommitAnalysis commitAnalysis = analyzeCommits(commits);
+        LLMAnalysis.CommitAnalysis commitAnalysis = analyzeCommits(commits, apiErrors, parseErrors);
         totalTokens += 400;
-        
-        LLMAnalysis.CommunityAnalysis communityAnalysis = analyzeCommunity(owner, repo);
+
+        LLMAnalysis.CommunityAnalysis communityAnalysis = analyzeCommunity(owner, repo, apiErrors, parseErrors);
         totalTokens += 300;
-        
+
+        // More accurate mode detection based on actual API behavior
+        // If API responses were invalid/unparseable, it's effectively fallback mode
+        boolean hasApiFailures = (apiErrors.get() + parseErrors.get()) >= 1;
+        boolean hasMultipleFallbacks = (readmeAnalysis.getClarity() <= 6 ||
+                                       commitAnalysis.getClarity() <= 6 ||
+                                       communityAnalysis.getResponsiveness() <= 3);
+
+        if (hasApiFailures || (parseErrors.get() >= 2 && hasMultipleFallbacks)) {
+            llmMode = "FALLBACK";
+        }
+
         List<LLMAnalysis.AIRecommendation> recommendations = generateRecommendations(
                 readmeAnalysis, commitAnalysis, communityAnalysis);
         totalTokens += 200;
-        
+
         double confidence = calculateConfidence(readmeAnalysis, commitAnalysis, communityAnalysis);
-        
-        logger.info("Completed LLM analysis for {}/{}: confidence={}, tokens={}", 
-                owner, repo, confidence, totalTokens);
-        
+
+        logger.info("Completed LLM analysis for {}/{}: confidence={}, tokens={}, mode={}, parseErrors={}, apiErrors={}",
+                owner, repo, confidence, totalTokens, llmMode, parseErrors, apiErrors);
+
         return LLMAnalysis.builder()
                 .readmeAnalysis(readmeAnalysis)
                 .commitAnalysis(commitAnalysis)
@@ -131,6 +146,7 @@ public class LLMAnalyzer {
                 .recommendations(recommendations)
                 .confidence(confidence)
                 .tokensUsed(totalTokens)
+                .llmMode(llmMode)
                 .build();
     }
 
@@ -143,12 +159,12 @@ public class LLMAnalyzer {
         }
     }
 
-    private LLMAnalysis.ReadmeAnalysis analyzeReadme(String readmeContent) throws IOException {
+    private LLMAnalysis.ReadmeAnalysis analyzeReadme(String readmeContent, AtomicInteger apiErrors, AtomicInteger parseErrors) throws IOException {
         if (readmeContent == null || readmeContent.isEmpty()) {
             return new LLMAnalysis.ReadmeAnalysis(
                     3, 2, 2,
                     List.of("Repository has some basic structure"),
-                    List.of("Add comprehensive README documentation", 
+                    List.of("Add comprehensive README documentation",
                             "Include installation instructions",
                             "Add usage examples")
             );
@@ -157,21 +173,22 @@ public class LLMAnalyzer {
         try {
             String prompt = buildReadmePrompt(readmeContent);
             LLMClient.LLMResponse response = llmClient.analyze(prompt);
-            return parseReadmeAnalysis(response.getContent());
+            return parseReadmeAnalysis(response.getContent(), parseErrors);
         } catch (Exception e) {
-            logger.warn("LLM analysis failed, using defaults: {}", e.getMessage());
+            logger.warn("LLM README analysis failed, using defaults: {}", e.getMessage());
+            apiErrors.incrementAndGet(); // API or network error
             return new LLMAnalysis.ReadmeAnalysis(
                     7, 5, 6,
-                    List.of("Well-structured sections with clear headings (Contributing, Development Container, License)", 
+                    List.of("Well-structured sections with clear headings (Contributing, Development Container, License)",
                             "Comprehensive links to external resources (issues, pull requests, documentation, dev container guide)"),
-                    List.of("Add a **Quick Start** or **Installation** section that explains how to get the project running locally (e.g., prerequisites, cloning, building, launching)", 
+                    List.of("Add a **Quick Start** or **Installation** section that explains how to get the project running locally (e.g., prerequisites, cloning, building, launching)",
                             "Include more code examples or screenshots to help users understand the project's features",
                             "Add a troubleshooting section for common issues")
             );
         }
     }
 
-    private LLMAnalysis.CommitAnalysis analyzeCommits(List<CommitInfo> commits) throws IOException {
+    private LLMAnalysis.CommitAnalysis analyzeCommits(List<CommitInfo> commits, AtomicInteger apiErrors, AtomicInteger parseErrors) throws IOException {
         if (commits.isEmpty()) {
             return new LLMAnalysis.CommitAnalysis(
                     5, 5, 5,
@@ -184,12 +201,13 @@ public class LLMAnalyzer {
                     .limit(20)
                     .map(CommitInfo::getMessage)
                     .collect(Collectors.joining("\n"));
-            
+
             String prompt = buildCommitPrompt(commitMessages);
             LLMClient.LLMResponse response = llmClient.analyze(prompt);
-            return parseCommitAnalysis(response.getContent());
+            return parseCommitAnalysis(response.getContent(), parseErrors);
         } catch (Exception e) {
             logger.warn("LLM commit analysis failed, using defaults: {}", e.getMessage());
+            apiErrors.incrementAndGet(); // API or network error
             return new LLMAnalysis.CommitAnalysis(
                     8, 6, 7,
                     List.of(
@@ -201,18 +219,19 @@ public class LLMAnalyzer {
         }
     }
 
-    private LLMAnalysis.CommunityAnalysis analyzeCommunity(String owner, String repo) throws IOException {
+    private LLMAnalysis.CommunityAnalysis analyzeCommunity(String owner, String repo, AtomicInteger apiErrors, AtomicInteger parseErrors) throws IOException {
         try {
             String prompt = buildCommunityPrompt(owner, repo);
             LLMClient.LLMResponse response = llmClient.analyze(prompt);
-            return parseCommunityAnalysis(response.getContent());
+            return parseCommunityAnalysis(response.getContent(), parseErrors);
         } catch (Exception e) {
             logger.warn("LLM community analysis failed, using defaults: {}", e.getMessage());
+            apiErrors.incrementAndGet(); // API or network error
             return new LLMAnalysis.CommunityAnalysis(
                     3, 3, 4,
-                    List.of("A high volume of issues and pull requests indicates active community engagement", 
+                    List.of("A high volume of issues and pull requests indicates active community engagement",
                             "The issues cover a wide range of topics, from bugs to feature requests, showing diverse participation"),
-                    List.of("Increase the speed of initial triage and acknowledgment of new issues and PRs to improve perceived responsiveness", 
+                    List.of("Increase the speed of initial triage and acknowledgment of new issues and PRs to improve perceived responsiveness",
                             "Provide more detailed, actionable responses to contributors, especially for bugs that require additional information",
                             "Implement a status badge or automated bot that confirms receipt of an issue/PR and gives an estimated response time")
             );
@@ -346,21 +365,24 @@ public class LLMAnalyzer {
                 """, owner, repo);
     }
 
-    private LLMAnalysis.ReadmeAnalysis parseReadmeAnalysis(String content) {
+    private LLMAnalysis.ReadmeAnalysis parseReadmeAnalysis(String content, AtomicInteger parseErrors) {
         try {
+            // Diagnostic logging like in other program
+            logger.error("=== LLM_DIAGNOSTICS [ERROR] README LLM JSON response: {} ===",
+                content.substring(0, Math.min(1000, content.length())));
             JsonObject json = gson.fromJson(content, JsonObject.class);
-            
+
             // Clean text from mojibake in strengths and suggestions
             List<String> cleanedStrengths = jsonArrayToList(json.getAsJsonArray("strengths"))
                     .stream()
                     .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
                     .collect(Collectors.toList());
-            
+
             List<String> cleanedSuggestions = jsonArrayToList(json.getAsJsonArray("suggestions"))
                     .stream()
                     .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
                     .collect(Collectors.toList());
-            
+
             return new LLMAnalysis.ReadmeAnalysis(
                     json.get("clarity").getAsInt(),
                     json.get("completeness").getAsInt(),
@@ -369,29 +391,33 @@ public class LLMAnalyzer {
                     cleanedSuggestions
             );
         } catch (Exception e) {
+            if (parseErrors != null) {
+                parseErrors.incrementAndGet(); // Count JSON parsing failures
+            }
             logger.warn("Failed to parse README analysis, using defaults: {}", e.getMessage());
             // Clean fallback values as well
             return new LLMAnalysis.ReadmeAnalysis(
                     7, 5, 6,
-                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Well-structured sections with clear headings"), 
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Well-structured sections with clear headings"),
                             com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Comprehensive links to external resources")),
-                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Add a Quick Start section"), 
-                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Include prerequisites"), 
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Add a Quick Start section"),
+                            com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Include prerequisites"),
                             com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Add usage examples"))
             );
         }
     }
 
-    private LLMAnalysis.CommitAnalysis parseCommitAnalysis(String content) {
+    private LLMAnalysis.CommitAnalysis parseCommitAnalysis(String content, AtomicInteger parseErrors) {
         try {
+            logger.debug("Commit LLM raw response: {}", content.substring(0, Math.min(500, content.length())));
             JsonObject json = gson.fromJson(content, JsonObject.class);
-            
+
             // Clean text from mojibake in patterns
             List<String> cleanedPatterns = jsonArrayToList(json.getAsJsonArray("patterns"))
                     .stream()
                     .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
                     .collect(Collectors.toList());
-            
+
             return new LLMAnalysis.CommitAnalysis(
                     json.get("clarity").getAsInt(),
                     json.get("consistency").getAsInt(),
@@ -399,6 +425,9 @@ public class LLMAnalyzer {
                     cleanedPatterns
             );
         } catch (Exception e) {
+            if (parseErrors != null) {
+                parseErrors.incrementAndGet(); // Count JSON parsing failures
+            }
             logger.warn("Failed to parse commit analysis, using defaults: {}", e.getMessage());
             // Clean fallback values as well
             return new LLMAnalysis.CommitAnalysis(
@@ -412,36 +441,45 @@ public class LLMAnalyzer {
         }
     }
 
-    private LLMAnalysis.CommunityAnalysis parseCommunityAnalysis(String content) {
+    private LLMAnalysis.CommunityAnalysis parseCommunityAnalysis(String content, AtomicInteger parseErrors) {
         try {
+            // Diagnostic logging like in other program
+            logger.error("=== LLM_DIAGNOSTICS [ERROR] COMMUNITY LLM JSON response: {} ===",
+                content.substring(0, Math.min(1000, content.length())));
             JsonObject json = gson.fromJson(content, JsonObject.class);
-            
+
+            // Handle both formats: "responsiveness_score" and "responsiveness"
+            int responsiveness = getIntValue(json, "responsiveness", "responsiveness_score");
+            int helpfulness = getIntValue(json, "helpfulness", "helpfulness_score");
+            int tone = getIntValue(json, "tone", "tone_score");
+
             // Clean text from mojibake in strengths and suggestions
             List<String> cleanedStrengths = jsonArrayToList(json.getAsJsonArray("strengths"))
                     .stream()
                     .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
                     .collect(Collectors.toList());
-            
+
             List<String> cleanedSuggestions = jsonArrayToList(json.getAsJsonArray("suggestions"))
                     .stream()
                     .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
                     .collect(Collectors.toList());
-            
+
             return new LLMAnalysis.CommunityAnalysis(
-                    json.get("responsiveness").getAsInt(),
-                    json.get("helpfulness").getAsInt(),
-                    json.get("tone").getAsInt(),
+                    responsiveness, helpfulness, tone,
                     cleanedStrengths,
                     cleanedSuggestions
             );
         } catch (Exception e) {
+            if (parseErrors != null) {
+                parseErrors.incrementAndGet(); // Count JSON parsing failures
+            }
             logger.warn("Failed to parse community analysis, using defaults: {}", e.getMessage());
             // Clean fallback values as well
             return new LLMAnalysis.CommunityAnalysis(
                     3, 3, 4,
-                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("High volume of issues indicates active community"), 
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("High volume of issues indicates active community"),
                             com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Wide range of topics shows diverse participation")),
-                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Increase speed of initial triage"), 
+                    List.of(com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Increase speed of initial triage"),
                             com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Provide more detailed responses"),
                             com.kaicode.rmi.util.EncodingHelper.cleanTextForWindows("Implement status badges for issues"))
             );
@@ -456,5 +494,25 @@ public class LLMAnalyzer {
             }
         }
         return list;
+    }
+
+    /**
+     * Gets an integer value from JSON object, trying multiple key names.
+     * This allows compatibility with different LLM response formats.
+     *
+     * @param json the JSON object to search
+     * @param primaryKey the primary key name (e.g., "responsiveness")
+     * @param fallbackKey the fallback key name (e.g., "responsiveness_score")
+     * @return the integer value from the first key found, defaults to 3 if neither found
+     */
+    private int getIntValue(JsonObject json, String primaryKey, String fallbackKey) {
+        if (json.has(primaryKey)) {
+            return json.get(primaryKey).getAsInt();
+        }
+        if (json.has(fallbackKey)) {
+            return json.get(fallbackKey).getAsInt();
+        }
+        // Default value if neither key exists
+        return 3;
     }
 }
