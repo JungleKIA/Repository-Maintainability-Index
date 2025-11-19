@@ -4,6 +4,8 @@ A production-level command-line tool for automated evaluation of GitHub reposito
 
 > **🚀 Quick Start**: New to RMI? Check out [QUICK_START.md](QUICK_START.md) for a fast setup guide!
 
+> **📊 Self-Analysis**: This repository practices what it preaches! Check [docs/REPOSITORY_IMPROVEMENT_SUMMARY.md](docs/REPOSITORY_IMPROVEMENT_SUMMARY.md) to see how we improved our own score from 53.45/100 to 69.45/100+ by following our tool's recommendations.
+
 ## Overview
 
 The Repository Maintainability Index tool analyzes GitHub repositories and provides a comprehensive assessment of their quality based on multiple metrics including documentation, commit quality, activity, issue management, community engagement, and branch management.
@@ -17,6 +19,7 @@ The Repository Maintainability Index tool analyzes GitHub repositories and provi
 - **Multiple Output Formats**: Supports both human-readable text and JSON formats
 - **GitHub API Integration**: Fetches real-time data from GitHub
 - **Production-Ready**: 90%+ test coverage with best practices
+- **📚 Complete Documentation**: Full suite of documentation (CONTRIBUTING.md, CODE_OF_CONDUCT.md, LICENSE, CHANGELOG.md)
 
 ## Metrics
 
@@ -451,6 +454,33 @@ You should see:
 - Emojis like 🤖 📖 💡
 
 If you see these correctly, Unicode support is working!
+
+## Documentation
+
+### 📚 Essential Documentation
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to this project
+- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** - Community standards and guidelines
+- **[LICENSE](LICENSE)** - MIT License
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+
+### 📖 Additional Resources
+
+- **[Quick Start Guide](QUICK_START.md)** - Get started in 5 minutes
+- **[Security Best Practices](SECURITY_BEST_PRACTICES.md)** - Security guidelines
+- **[LLM Features](LLM_FEATURES.md)** - AI-powered analysis documentation
+
+### 🏗️ Technical Documentation
+
+- **[Production Documentation](docs/)** - Complete production guides
+  - [Production Readiness Summary](docs/PRODUCTION_READINESS_SUMMARY.md)
+  - [Operations Runbook](docs/OPERATIONS_RUNBOOK.md)
+  - [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
+  - [API Specification](docs/API_SPECIFICATION.md)
+- **[Architecture Documentation](docs/architecture/)** - System architecture
+  - [C4 Architecture Diagrams](docs/architecture/C4_ARCHITECTURE.md)
+  - [Architecture Decision Records (ADRs)](docs/architecture/adr/)
+- **[Documentation Index](docs/INDEX.md)** - Complete documentation index
 
 ## Development
 
