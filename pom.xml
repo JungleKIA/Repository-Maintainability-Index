@@ -6,7 +6,7 @@
 
     <groupId>com.kaicode</groupId>
     <artifactId>repo-maintainability-index</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>Repository Maintainability Index</name>
@@ -132,6 +132,12 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- Compiler Plugin -->
             <plugin>

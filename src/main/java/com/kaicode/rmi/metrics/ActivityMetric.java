@@ -86,8 +86,20 @@ public class ActivityMetric implements MetricCalculator {
 
         double score = calculateScoreFromDays(daysSinceLastCommit);
 
-        String details = String.format("Last commit was %d days ago. Recent activity: %d commits",
-                daysSinceLastCommit, commits.size());
+        String details;
+        if (daysSinceLastCommit < 1) {
+            long hoursSinceLastCommit = ChronoUnit.HOURS.between(mostRecentCommit, now);
+            String shortMessage = commits.get(0).getMessage();
+            if (shortMessage.length() > 70) {
+                shortMessage = shortMessage.substring(0, 67) + "...";
+            }
+            String sha = commits.get(0).getSha().substring(0, 7);
+            details = String.format("Last commit: %s - %s * %s * %d hour%s ago. Recent activity: %d commits",
+                    commits.get(0).getAuthor(), shortMessage, sha, hoursSinceLastCommit, hoursSinceLastCommit == 1 ? "" : "s", commits.size());
+        } else {
+            details = String.format("Last commit was %d days ago. Recent activity: %d commits",
+                    daysSinceLastCommit, commits.size());
+        }
 
         logger.info("Activity score for {}/{}: {}", owner, repo, score);
 

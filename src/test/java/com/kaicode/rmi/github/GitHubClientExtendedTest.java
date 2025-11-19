@@ -33,7 +33,7 @@ class GitHubClientExtendedTest {
 
     @Test
     void shouldHandleNullDescription() throws Exception {
-        String jsonResponse = """
+        String repoResponse = """
                 {
                     "name": "test-repo",
                     "owner": {"login": "test-owner"},
@@ -49,8 +49,15 @@ class GitHubClientExtendedTest {
                 }
                 """;
 
+        // Enqueue repo response
         mockServer.enqueue(new MockResponse()
-                .setBody(jsonResponse)
+                .setBody(repoResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
+        // Enqueue open issues response (empty)
+        mockServer.enqueue(new MockResponse()
+                .setBody("[]")
                 .setResponseCode(200)
                 .addHeader("Content-Type", "application/json"));
 
@@ -60,14 +67,19 @@ class GitHubClientExtendedTest {
     }
 
     @Test
-    void shouldGetClosedIssuesCountWithLinkHeader() throws Exception {
-        String jsonResponse = "[]";
+    void shouldGetClosedIssuesCountWithPagination() throws Exception {
+        String jsonResponsePage1 = "[{},{},{},{},{}]"; // 5 issues without pull_request
+        String jsonResponsePage2 = "[]";
 
         mockServer.enqueue(new MockResponse()
-                .setBody(jsonResponse)
+                .setBody(jsonResponsePage1)
                 .setResponseCode(200)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Link", "<http://example.com?page=5>; rel=\"last\""));
+                .addHeader("Content-Type", "application/json"));
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(jsonResponsePage2)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
 
         int count = client.getClosedIssuesCount("owner", "repo");
 

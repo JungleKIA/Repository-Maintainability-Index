@@ -189,17 +189,17 @@ public class GitHubClient {
     public RepositoryInfo getRepository(String owner, String repo) throws IOException {
         String url = String.format("%s/repos/%s/%s", apiBaseUrl, owner, repo);
         String responseBody = executeRequest(url);
-        
+
         JsonObject json = gson.fromJson(responseBody, JsonObject.class);
-        
+
         return RepositoryInfo.builder()
                 .owner(owner)
                 .name(repo)
-                .description(json.has("description") && !json.get("description").isJsonNull() 
+                .description(json.has("description") && !json.get("description").isJsonNull()
                         ? json.get("description").getAsString() : "")
                 .stars(json.get("stargazers_count").getAsInt())
                 .forks(json.get("forks_count").getAsInt())
-                .openIssues(json.get("open_issues_count").getAsInt())
+                .openIssues(this.getOpenIssuesCount(owner, repo))
                 .lastUpdated(parseDateTime(json.get("updated_at").getAsString()))
                 .hasWiki(json.get("has_wiki").getAsBoolean())
                 .hasIssues(json.get("has_issues").getAsBoolean())
@@ -228,18 +228,18 @@ public class GitHubClient {
      * @see CommitInfo
      */
     public List<CommitInfo> getRecentCommits(String owner, String repo, int count) throws IOException {
-        String url = String.format("%s/repos/%s/%s/commits?per_page=%d", 
+        String url = String.format("%s/repos/%s/%s/commits?per_page=%d",
                 apiBaseUrl, owner, repo, Math.min(count, 100));
         String responseBody = executeRequest(url);
-        
+
         JsonArray commits = gson.fromJson(responseBody, JsonArray.class);
         List<CommitInfo> result = new ArrayList<>();
-        
+
         for (int i = 0; i < commits.size(); i++) {
             JsonObject commit = commits.get(i).getAsJsonObject();
             JsonObject commitData = commit.getAsJsonObject("commit");
             JsonObject author = commitData.getAsJsonObject("author");
-            
+
             result.add(CommitInfo.builder()
                     .sha(commit.get("sha").getAsString())
                     .message(commitData.get("message").getAsString())
@@ -247,7 +247,7 @@ public class GitHubClient {
                     .date(parseDateTime(author.get("date").getAsString()))
                     .build());
         }
-        
+
         return result;
     }
 
@@ -270,7 +270,7 @@ public class GitHubClient {
      */
     public boolean hasFile(String owner, String repo, String path) {
         try {
-            String url = String.format("%s/repos/%s/%s/contents/%s", 
+            String url = String.format("%s/repos/%s/%s/contents/%s",
                     apiBaseUrl, owner, repo, path);
             executeRequest(url);
             return true;
@@ -283,37 +283,87 @@ public class GitHubClient {
     /**
      * Gets the total count of closed issues in the repository.
      * <p>
-     * Retrieves the number of resolved issues by examining the GitHub pagination
-     * headers. Uses paginated API call to {@code repos/owner/repo/issues} with
-     * {@code state=closed}. If there are many closed issues, may require multiple
-     * requests to determine total count.
+     * Retrieves the number of resolved issues by fetching all closed issues/PRs
+     * and filtering out pull requests. Uses paginated API call to {@code repos/owner/repo/issues} with
+     * {@code state=closed}. Counts only pure issues (not pull requests).
      * <p>
      * This metric helps assess issue management effectiveness and community activity.
      *
      * @param owner GitHub username or organization name, must not be null or empty
      * @param repo repository name, must not be null or empty
-     * @return total number of closed issues in the repository
+     * @return total number of closed issues in the repository (excluding pull requests)
      * @throws IOException if network error occurs or repository doesn't exist
-     * @throws NullPointerException if owner or repo parameters are null
      * @throws IllegalArgumentException if owner or repo parameters are empty
      * @since 1.0
      */
     public int getClosedIssuesCount(String owner, String repo) throws IOException {
-        String url = String.format("%s/repos/%s/%s/issues?state=closed&per_page=1", 
-                apiBaseUrl, owner, repo);
-        Response response = executeRequestWithResponse(url);
-        
-        String linkHeader = response.header("Link");
-        if (linkHeader != null && linkHeader.contains("last")) {
-            String lastPage = extractLastPage(linkHeader);
-            if (lastPage != null) {
-                return Integer.parseInt(lastPage);
+        int totalClosedIssues = 0;
+        int page = 1;
+
+        while (true) {
+            String url = String.format("%s/repos/%s/%s/issues?state=closed&per_page=100&page=%d",
+                    apiBaseUrl, owner, repo, page);
+            String responseBody = executeRequest(url);
+            JsonArray issues = gson.fromJson(responseBody, JsonArray.class);
+
+            for (int i = 0; i < issues.size(); i++) {
+                JsonObject issue = issues.get(i).getAsJsonObject();
+                // Count only pure issues, skip pull requests
+                if (!issue.has("pull_request") || issue.get("pull_request").isJsonNull()) {
+                    totalClosedIssues++;
+                }
             }
+
+            if (issues.size() < 100) {
+                break; // No more pages
+            }
+            page++;
         }
-        
-        String responseBody = response.body().string();
-        JsonArray issues = gson.fromJson(responseBody, JsonArray.class);
-        return issues.size();
+
+        return totalClosedIssues;
+    }
+
+    /**
+     * Gets the total count of open issues in the repository.
+     * <p>
+     * Retrieves the number of open issues by fetching all open issues/PRs
+     * and filtering out pull requests. Uses paginated API call to {@code repos/owner/repo/issues} with
+     * {@code state=open}. Counts only pure issues (not pull requests).
+     * <p>
+     * This metric helps assess current issue backlog for maintainability.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @return total number of open issues in the repository (excluding pull requests)
+     * @throws IOException if network error occurs or repository doesn't exist
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     */
+    public int getOpenIssuesCount(String owner, String repo) throws IOException {
+        int totalOpenIssues = 0;
+        int page = 1;
+
+        while (true) {
+            String url = String.format("%s/repos/%s/%s/issues?state=open&per_page=100&page=%d",
+                    apiBaseUrl, owner, repo, page);
+            String responseBody = executeRequest(url);
+            JsonArray issues = gson.fromJson(responseBody, JsonArray.class);
+
+            for (int i = 0; i < issues.size(); i++) {
+                JsonObject issue = issues.get(i).getAsJsonObject();
+                // Count only pure issues, skip pull requests
+                if (!issue.has("pull_request") || issue.get("pull_request").isJsonNull()) {
+                    totalOpenIssues++;
+                }
+            }
+
+            if (issues.size() < 100) {
+                break; // No more pages
+            }
+            page++;
+        }
+
+        return totalOpenIssues;
     }
 
     /**
@@ -335,7 +385,7 @@ public class GitHubClient {
      * @since 1.0
      */
     public int getBranchCount(String owner, String repo) throws IOException {
-        String url = String.format("%s/repos/%s/%s/branches?per_page=100", 
+        String url = String.format("%s/repos/%s/%s/branches?per_page=100",
                 apiBaseUrl, owner, repo);
         String responseBody = executeRequest(url);
         JsonArray branches = gson.fromJson(responseBody, JsonArray.class);
@@ -361,7 +411,7 @@ public class GitHubClient {
      * @since 1.0
      */
     public int getContributorCount(String owner, String repo) throws IOException {
-        String url = String.format("%s/repos/%s/%s/contributors?per_page=100", 
+        String url = String.format("%s/repos/%s/%s/contributors?per_page=100",
                 apiBaseUrl, owner, repo);
         String responseBody = executeRequest(url);
         JsonArray contributors = gson.fromJson(responseBody, JsonArray.class);
@@ -377,20 +427,20 @@ public class GitHubClient {
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
                 .header("Accept", "application/vnd.github.v3+json");
-        
+
         if (token != null && !token.isEmpty()) {
             requestBuilder.header("Authorization", "Bearer " + token);
         }
-        
+
         Request request = requestBuilder.build();
         Response response = httpClient.newCall(request).execute();
-        
+
         if (!response.isSuccessful()) {
             String errorBody = response.body() != null ? response.body().string() : "No error body";
-            throw new IOException(String.format("GitHub API request failed: %d - %s", 
+            throw new IOException(String.format("GitHub API request failed: %d - %s",
                     response.code(), errorBody));
         }
-        
+
         return response;
     }
 

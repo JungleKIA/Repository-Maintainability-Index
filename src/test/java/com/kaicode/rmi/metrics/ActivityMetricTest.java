@@ -30,13 +30,14 @@ class ActivityMetricTest {
     }
 
     @Test
-    void shouldReturnHighScoreForRecentActivity() throws IOException {
-        LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
+    void shouldReturnHighScoreForRecentActivityHours() throws IOException {
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         List<CommitInfo> commits = List.of(
                 CommitInfo.builder()
-                        .sha("abc123")
-                        .message("Recent commit")
-                        .date(yesterday)
+                        .sha("abc123def")
+                        .author("TestAuthor")
+                        .message("Recent commit message that should be shortened")
+                        .date(oneHourAgo)
                         .build()
         );
 
@@ -46,6 +47,7 @@ class ActivityMetricTest {
 
         assertThat(result.getScore()).isGreaterThanOrEqualTo(90.0);
         assertThat(result.getName()).isEqualTo("Activity");
+        assertThat(result.getDetails()).contains("TestAuthor").contains("hour ago").contains("Recent commit message").contains("abc123d");
     }
 
     @Test
