@@ -36,7 +36,7 @@ class ActivityMetricTest {
                 CommitInfo.builder()
                         .sha("abc123def")
                         .author("TestAuthor")
-                        .message("Recent commit message that should be shortened")
+                        .message("Recent commit message that should be shortened (#123)")
                         .date(oneHourAgo)
                         .build()
         );
@@ -47,7 +47,7 @@ class ActivityMetricTest {
 
         assertThat(result.getScore()).isGreaterThanOrEqualTo(90.0);
         assertThat(result.getName()).isEqualTo("Activity");
-        assertThat(result.getDetails()).contains("TestAuthor").contains("hour ago").contains("Recent commit message").contains("abc123d");
+        assertThat(result.getDetails()).contains("TestAuthor").contains("hour ago").contains("Recent commit message").contains("abc123d").contains("(#123)");
     }
 
     @Test
@@ -55,8 +55,9 @@ class ActivityMetricTest {
         LocalDateTime twoYearsAgo = LocalDateTime.now().minusYears(2);
         List<CommitInfo> commits = List.of(
                 CommitInfo.builder()
-                        .sha("abc123")
-                        .message("Old commit")
+                        .sha("abc123def")
+                        .author("OldAuthor")
+                        .message("Old commit message")
                         .date(twoYearsAgo)
                         .build()
         );
@@ -66,6 +67,7 @@ class ActivityMetricTest {
         MetricResult result = metric.calculate(client, "owner", "repo");
 
         assertThat(result.getScore()).isLessThanOrEqualTo(20.0);
+        assertThat(result.getDetails()).contains("OldAuthor").contains("Old commit message").contains("abc123d").contains("days ago");
     }
 
     @Test

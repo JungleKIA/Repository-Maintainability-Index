@@ -87,19 +87,35 @@ public class ActivityMetric implements MetricCalculator {
         double score = calculateScoreFromDays(daysSinceLastCommit);
 
         String details;
-        if (daysSinceLastCommit < 1) {
-            long hoursSinceLastCommit = ChronoUnit.HOURS.between(mostRecentCommit, now);
-            String shortMessage = commits.get(0).getMessage();
-            if (shortMessage.length() > 70) {
-                shortMessage = shortMessage.substring(0, 67) + "...";
-            }
-            String sha = commits.get(0).getSha().substring(0, Math.min(commits.get(0).getSha().length(), 7));
-            details = String.format("Last commit: %s - %s * %s * %d hour%s ago. Recent activity: %d commits",
-                    commits.get(0).getAuthor(), shortMessage, sha, hoursSinceLastCommit, hoursSinceLastCommit == 1 ? "" : "s", commits.size());
-        } else {
-            details = String.format("Last commit was %d days ago. Recent activity: %d commits",
-                    daysSinceLastCommit, commits.size());
+        // Always show author and shortened message
+        String shortMessage = commits.get(0).getMessage();
+        // Include PR number if present in the message (e.g., (#123))
+        String prNumber = extractPRNumber(shortMessage);
+        if (shortMessage.length() > 70) {
+            // Reserve space for PR if present
+            int maxLength = prNumber.isEmpty() ? 70 : 65;
+            shortMessage = shortMessage.substring(0, maxLength - (prNumber.isEmpty() ? 0 : prNumber.length() + 2)) + "...";
         }
+        if (!prNumber.isEmpty()) {
+            shortMessage += " (" + prNumber + ")";
+        }
+        String author = commits.get(0).getAuthor();
+        String sha = commits.get(0).getSha().substring(0, Math.min(commits.get(0).getSha().length(), 7));
+
+        // Format with optional time unit
+        String timeUnit;
+        long timeValue;
+        if (daysSinceLastCommit < 1) {
+            timeValue = ChronoUnit.HOURS.between(mostRecentCommit, now);
+            timeUnit = "hour";
+        } else {
+            timeValue = daysSinceLastCommit;
+            timeUnit = "day";
+        }
+        String timeString = timeValue == 1 ? timeUnit : timeUnit + "s";
+
+        details = String.format("Last commit: %s - %s * %s * %d %s ago. Recent activity: %d commits",
+                author, shortMessage, sha, timeValue, timeString, commits.size());
 
         logger.info("Activity score for {}/{}: {}", owner, repo, score);
 
@@ -169,5 +185,26 @@ public class ActivityMetric implements MetricCalculator {
     @Override
     public double getWeight() {
         return WEIGHT;
+    }
+
+    /**
+     * Extracts PR number from commit message if present.
+     * <p>
+     * Looks for pattern like "(#123)" or "#123" in the message and returns the number.
+     *
+     * @param message commit message to parse
+     * @return PR number if found, empty string otherwise
+     */
+    private String extractPRNumber(String message) {
+        if (message == null || message.isEmpty()) {
+            return "";
+        }
+        // Match (#123) or #123 at the end of message
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\(#(\\d+)\\)|#(\\d+)$");
+        java.util.regex.Matcher matcher = pattern.matcher(message);
+        if (matcher.find()) {
+            return "#" + (matcher.group(1) != null ? matcher.group(1) : matcher.group(2));
+        }
+        return "";
     }
 }
