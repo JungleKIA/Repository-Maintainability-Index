@@ -68,6 +68,34 @@ class GitHubClientExtendedTest {
 
     @Test
     void shouldGetClosedIssuesCountWithPagination() throws Exception {
+        // Mock getRepository call first with all required fields
+        String repoResponse = """
+                {
+                    "name": "repo",
+                    "owner": {"login": "owner"},
+                    "description": "Test repository for large dataset pagination",
+                    "stargazers_count": 100,
+                    "forks_count": 10,
+                    "open_issues_count": 50,
+                    "updated_at": "2024-01-01T12:00:00Z",
+                    "has_wiki": true,
+                    "has_issues": true,
+                    "default_branch": "main",
+                    "size": 1024
+                }
+                """;
+        mockServer.enqueue(new MockResponse()
+                .setBody(repoResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
+        // Mock open issues response
+        String openIssuesResponse = "[{},{},{}]"; // 3 open issues to match pagination logic
+        mockServer.enqueue(new MockResponse()
+                .setBody(openIssuesResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
         String jsonResponsePage1 = "[{},{},{},{},{}]"; // 5 issues without pull_request
         String jsonResponsePage2 = "[]";
 
@@ -88,6 +116,33 @@ class GitHubClientExtendedTest {
 
     @Test
     void shouldGetClosedIssuesCountWithoutLinkHeader() throws Exception {
+        // Mock getRepository call first with all required fields
+        String repoResponse = """
+                {
+                    "name": "repo",
+                    "owner": {"login": "owner"},
+                    "description": "Test repository for no link header test",
+                    "stargazers_count": 50,
+                    "forks_count": 5,
+                    "open_issues_count": 25,
+                    "updated_at": "2024-01-01T12:00:00Z",
+                    "has_wiki": true,
+                    "has_issues": true,
+                    "default_branch": "main",
+                    "size": 512
+                }
+                """;
+        mockServer.enqueue(new MockResponse()
+                .setBody(repoResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
+        // Mock open issues response (empty)
+        mockServer.enqueue(new MockResponse()
+                .setBody("[]")
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
         String jsonResponse = "[{}, {}, {}]";
 
         mockServer.enqueue(new MockResponse()
@@ -102,6 +157,33 @@ class GitHubClientExtendedTest {
 
     @Test
     void shouldGetClosedIssuesCountWithInvalidLinkHeader() throws Exception {
+        // Mock getRepository call first with all required fields
+        String repoResponse = """
+                {
+                    "name": "repo",
+                    "owner": {"login": "owner"},
+                    "description": "Test repository for invalid link header",
+                    "stargazers_count": 75,
+                    "forks_count": 8,
+                    "open_issues_count": 30,
+                    "updated_at": "2024-01-01T12:00:00Z",
+                    "has_wiki": true,
+                    "has_issues": true,
+                    "default_branch": "develop",
+                    "size": 2048
+                }
+                """;
+        mockServer.enqueue(new MockResponse()
+                .setBody(repoResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
+        // Mock open issues response
+        mockServer.enqueue(new MockResponse()
+                .setBody("[]")
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
         String jsonResponse = "[{}, {}]";
 
         mockServer.enqueue(new MockResponse()

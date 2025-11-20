@@ -2,6 +2,7 @@ package com.kaicode.rmi.metrics;
 
 import com.kaicode.rmi.github.GitHubClient;
 import com.kaicode.rmi.model.MetricResult;
+import com.kaicode.rmi.model.RepositoryInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,16 @@ class DocumentationMetricTest {
 
     @Test
     void shouldReturnPerfectScoreWhenAllFilesPresent() throws IOException {
+        // Mock repository info for small repository (should do full checks)
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(500)    // Not large
+                .forks(50)     // Not large
+                .openIssues(50) // Not large
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         when(client.hasFile("owner", "repo", "README.md")).thenReturn(true);
         when(client.hasFile("owner", "repo", "CONTRIBUTING.md")).thenReturn(true);
         when(client.hasFile("owner", "repo", "LICENSE")).thenReturn(true);
@@ -43,6 +54,16 @@ class DocumentationMetricTest {
 
     @Test
     void shouldReturnZeroScoreWhenNoFilesPresent() throws IOException {
+        // Mock repository info for small repository
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(100)
+                .forks(10)
+                .openIssues(5)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         when(client.hasFile("owner", "repo", "README.md")).thenReturn(false);
         when(client.hasFile("owner", "repo", "CONTRIBUTING.md")).thenReturn(false);
         when(client.hasFile("owner", "repo", "LICENSE")).thenReturn(false);
@@ -56,6 +77,16 @@ class DocumentationMetricTest {
 
     @Test
     void shouldReturnPartialScoreWhenSomeFilesPresent() throws IOException {
+        // Mock repository info for small repository
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(200)
+                .forks(25)
+                .openIssues(15)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         when(client.hasFile("owner", "repo", "README.md")).thenReturn(true);
         when(client.hasFile("owner", "repo", "CONTRIBUTING.md")).thenReturn(false);
         when(client.hasFile("owner", "repo", "LICENSE")).thenReturn(true);

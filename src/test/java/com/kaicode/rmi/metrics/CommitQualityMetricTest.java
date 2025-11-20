@@ -3,6 +3,7 @@ package com.kaicode.rmi.metrics;
 import com.kaicode.rmi.github.GitHubClient;
 import com.kaicode.rmi.model.CommitInfo;
 import com.kaicode.rmi.model.MetricResult;
+import com.kaicode.rmi.model.RepositoryInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,16 @@ class CommitQualityMetricTest {
 
     @Test
     void shouldReturnHighScoreForGoodCommits() throws IOException {
+        // Mock small repository info (should analyze 50 commits)
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(200)
+                .forks(20)
+                .openIssues(10)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         List<CommitInfo> commits = List.of(
                 createCommit("feat: add new feature"),
                 createCommit("fix: resolve bug"),
@@ -51,6 +62,16 @@ class CommitQualityMetricTest {
 
     @Test
     void shouldReturnLowScoreForPoorCommits() throws IOException {
+        // Mock small repository info
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(100)
+                .forks(10)
+                .openIssues(5)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         List<CommitInfo> commits = List.of(
                 createCommit("fix"),
                 createCommit("wip"),
@@ -67,6 +88,16 @@ class CommitQualityMetricTest {
 
     @Test
     void shouldReturnZeroScoreForNoCommits() throws IOException {
+        // Mock small repository info
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(50)
+                .forks(5)
+                .openIssues(2)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         when(client.getRecentCommits("owner", "repo", 50)).thenReturn(List.of());
 
         MetricResult result = metric.calculate(client, "owner", "repo");
