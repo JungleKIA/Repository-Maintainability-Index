@@ -153,6 +153,61 @@ class CommitQualityMetricTest {
         assertThat(metric.isGoodCommit("   ")).isFalse();
     }
 
+    @Test
+    void shouldUseReducedCommitSampleForLargeRepository() throws IOException {
+        // Mock large repository (stars >= 10000)
+        RepositoryInfo largeRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("large-repo")
+                .stars(15000)  // Triggers large repo detection
+                .forks(5000)
+                .openIssues(1000)
+                .build();
+        when(client.getRepository("owner", "large-repo")).thenReturn(largeRepo);
+
+        List<CommitInfo> commits = List.of(
+                createCommit("feat: add new feature"),
+                createCommit("fix: resolve bug"),
+                createCommit("docs: update README")
+        );
+
+        // For large repos, should ask for only 10 commits instead of 50
+        when(client.getRecentCommits("owner", "large-repo", 10)).thenReturn(commits);
+
+        MetricResult result = metric.calculate(client, "owner", "large-repo");
+
+        assertThat(result.getScore()).isEqualTo(100.0);
+        assertThat(result.getName()).isEqualTo("Commit Quality");
+        assertThat(result.getDetails()).contains("sampled for large repository");
+    }
+
+    @Test
+    void shouldUseFullCommitSampleForSmallRepository() throws IOException {
+        // Mock small repository
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("small-repo")
+                .stars(500)  // Not large
+                .forks(50)
+                .openIssues(20)
+                .build();
+        when(client.getRepository("owner", "small-repo")).thenReturn(smallRepo);
+
+        List<CommitInfo> commits = List.of(
+                createCommit("feat: add new feature"),
+                createCommit("fix: resolve bug"),
+                createCommit("docs: update README")
+        );
+
+        // For small repos, should ask for full 50 commits
+        when(client.getRecentCommits("owner", "small-repo", 50)).thenReturn(commits);
+
+        MetricResult result = metric.calculate(client, "owner", "small-repo");
+
+        assertThat(result.getScore()).isEqualTo(100.0);
+        assertThat(result.getDetails()).doesNotContain("commit sampling for large repository");
+    }
+
     private CommitInfo createCommit(String message) {
         return CommitInfo.builder()
                 .sha("abc123")

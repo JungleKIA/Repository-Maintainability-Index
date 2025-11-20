@@ -12,6 +12,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,5 +108,75 @@ class DocumentationMetricTest {
     void shouldHaveCorrectMetadata() {
         assertThat(metric.getMetricName()).isEqualTo("Documentation");
         assertThat(metric.getWeight()).isEqualTo(0.20);
+    }
+
+    @Test
+    void shouldUseFastPathForMicrosoftVscode() throws IOException {
+        MetricResult result = metric.calculate(client, "microsoft", "vscode");
+
+        assertThat(result.getScore()).isEqualTo(80.0); // FAST_PATH score
+        assertThat(result.getName()).isEqualTo("Documentation");
+        assertThat(result.getWeight()).isEqualTo(0.20);
+        assertThat(result.getDetails()).contains("Assumed present for large repository");
+        // No file checks should be performed for FAST_PATH
+        verify(client, never()).hasFile(anyString(), anyString(), anyString());
+        verify(client, never()).getRepository(anyString(), anyString()); // FAST_PATH doesn't call getRepository
+    }
+
+    @Test
+    void shouldUseFastModeForLargeRepositoryByStars() throws IOException {
+        // Mock repository with >= 10000 stars (FAST_MODE case)
+        RepositoryInfo largeRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("large-repo")
+                .stars(15000)  // Triggers FAST_MODE
+                .forks(2000)
+                .openIssues(500)
+                .build();
+        when(client.getRepository("owner", "large-repo")).thenReturn(largeRepo);
+
+        MetricResult result = metric.calculate(client, "owner", "large-repo");
+
+        assertThat(result.getScore()).isEqualTo(80.0);
+        assertThat(result.getDetails()).contains("Assumed present for large repository");
+        verify(client, never()).hasFile(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void shouldUseFastModeForLargeRepositoryByIssues() throws IOException {
+        // Mock repository with >= 1000 open issues (FAST_MODE case)
+        RepositoryInfo issueHeavyRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("busy-repo")
+                .stars(5000)
+                .forks(3000)
+                .openIssues(5000)  // Triggers FAST_MODE
+                .build();
+        when(client.getRepository("owner", "busy-repo")).thenReturn(issueHeavyRepo);
+
+        MetricResult result = metric.calculate(client, "owner", "busy-repo");
+
+        assertThat(result.getScore()).isEqualTo(80.0);
+        assertThat(result.getDetails()).contains("Assumed present for large repository");
+        verify(client, never()).hasFile(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void shouldUseFastModeForLargeRepositoryByForks() throws IOException {
+        // Mock repository with >= 5000 forks (FAST_MODE case)
+        RepositoryInfo forkHeavyRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("forked-repo")
+                .stars(3000)
+                .forks(8000)  // Triggers FAST_MODE
+                .openIssues(200)
+                .build();
+        when(client.getRepository("owner", "forked-repo")).thenReturn(forkHeavyRepo);
+
+        MetricResult result = metric.calculate(client, "owner", "forked-repo");
+
+        assertThat(result.getScore()).isEqualTo(80.0);
+        assertThat(result.getDetails()).contains("Assumed present for large repository");
+        verify(client, never()).hasFile(anyString(), anyString(), anyString());
     }
 }

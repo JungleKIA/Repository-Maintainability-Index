@@ -192,10 +192,12 @@ class GitHubClientExtendedTest {
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Link", "<http://example.com>; rel=\"next\""));
 
-        int count = client.getClosedIssuesCount("owner", "repo");
+    int count = client.getClosedIssuesCount("owner", "repo");
 
         assertThat(count).isEqualTo(2);
     }
+
+
 
     @Test
     void shouldHandleEmptyCommitList() throws Exception {
