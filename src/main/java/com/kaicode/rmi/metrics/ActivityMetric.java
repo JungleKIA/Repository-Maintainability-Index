@@ -86,8 +86,43 @@ public class ActivityMetric implements MetricCalculator {
 
         double score = calculateScoreFromDays(daysSinceLastCommit);
 
-        String details = String.format("Last commit was %d days ago. Recent activity: %d commits",
-                daysSinceLastCommit, commits.size());
+        String details;
+        // Always show author and shortened message
+        String shortMessage = commits.get(0).getMessage();
+        // Include PR number if present in the message (e.g., (#123))
+        String prNumber = extractPRNumber(shortMessage);
+        if (shortMessage.length() > 70) {
+            // Reserve space for PR if present
+            int maxLength = prNumber.isEmpty() ? 70 : 65;
+            shortMessage = shortMessage.substring(0, maxLength - (prNumber.isEmpty() ? 0 : prNumber.length() + 2)) + "...";
+        }
+        if (!prNumber.isEmpty()) {
+            shortMessage += " (" + prNumber + ")";
+        }
+        String author = commits.get(0).getAuthor();
+        String sha = commits.get(0).getSha().substring(0, Math.min(commits.get(0).getSha().length(), 7));
+
+        // Format with optional time unit
+        String timeString;
+        if (daysSinceLastCommit < 1) {
+            long hoursValue = ChronoUnit.HOURS.between(mostRecentCommit, now);
+            timeString = hoursValue == 1 ? "1 hour" : hoursValue + " hours";
+        } else if (daysSinceLastCommit < 365) {
+            timeString = daysSinceLastCommit == 1 ? "1 day" : daysSinceLastCommit + " days";
+        } else {
+            long years = daysSinceLastCommit / 365;
+            long remainingDays = daysSinceLastCommit % 365;
+            String yearsString = years == 1 ? "1 year" : years + " years";
+            if (remainingDays > 0) {
+                String daysString = remainingDays == 1 ? "1 day" : remainingDays + " days";
+                timeString = yearsString + " and " + daysString;
+            } else {
+                timeString = yearsString;
+            }
+        }
+
+        details = String.format("Last commit: %s - %s * %s * %s ago. Recent activity: %d commits",
+                author, shortMessage, sha, timeString, commits.size());
 
         logger.info("Activity score for {}/{}: {}", owner, repo, score);
 
@@ -157,5 +192,26 @@ public class ActivityMetric implements MetricCalculator {
     @Override
     public double getWeight() {
         return WEIGHT;
+    }
+
+    /**
+     * Extracts PR number from commit message if present.
+     * <p>
+     * Looks for pattern like "(#123)" or "#123" in the message and returns the number.
+     *
+     * @param message commit message to parse
+     * @return PR number if found, empty string otherwise
+     */
+    private String extractPRNumber(String message) {
+        if (message == null || message.isEmpty()) {
+            return "";
+        }
+        // Match (#123) or #123 at the end of message
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\(#(\\d+)\\)|#(\\d+)$");
+        java.util.regex.Matcher matcher = pattern.matcher(message);
+        if (matcher.find()) {
+            return "#" + (matcher.group(1) != null ? matcher.group(1) : matcher.group(2));
+        }
+        return "";
     }
 }

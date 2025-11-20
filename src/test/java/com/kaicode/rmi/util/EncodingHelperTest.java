@@ -8,14 +8,15 @@ import java.io.PrintWriter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 class EncodingHelperTest {
 
     @Test
     void shouldCreateUTF8PrintWriter() {
-        PrintWriter writer = EncodingHelper.createUTF8PrintWriter();
-        
-        assertThat(writer).isNotNull();
-        assertThat(writer).isInstanceOf(PrintWriter.class);
+        try (PrintWriter writer = EncodingHelper.createUTF8PrintWriter()) {
+            assertThat(writer).isNotNull();
+            assertThat(writer).isInstanceOf(PrintWriter.class);
+        }
     }
 
     @Test

@@ -87,7 +87,19 @@ public class IssueManagementMetric implements MetricCalculator {
         }
 
         int openIssues = repoInfo.getOpenIssues();
-        int closedIssues = client.getClosedIssuesCount(owner, repo);
+        int closedIssues;
+        try {
+            closedIssues = client.getClosedIssuesCount(owner, repo);
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("422")) {
+                logger.warn("Large dataset detected for {}/{}, using estimation for closed issues", owner, repo);
+                // For large repositories, estimate closed issues assuming typical 70% closure rate
+                closedIssues = Math.max(0, (int)(openIssues / 0.3 * 0.7));
+                logger.info("Estimated closed issues for {}/{}: {} (based on open issues: {})", owner, repo, closedIssues, openIssues);
+            } else {
+                throw e; // Re-throw non-422 errors
+            }
+        }
         int totalIssues = openIssues + closedIssues;
 
         if (totalIssues == 0) {

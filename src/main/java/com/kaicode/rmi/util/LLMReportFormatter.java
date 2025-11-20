@@ -96,6 +96,10 @@ public class LLMReportFormatter {
         text.append("🤖 LLM INSIGHTS\n");
         text.append("═══════════════════════════════════════════════════════════════════════════\n");
 
+        // Add LLM mode status indicator
+        String modeEmoji = "REAL".equals(analysis.getLlmMode()) ? "✅" : "⚠️";
+        text.append(String.format("📊 Status: %s %s ANALYSIS\n\n", modeEmoji, analysis.getLlmMode()));
+
         text.append(formatReadmeAnalysis(analysis.getReadmeAnalysis()));
         text.append("\n");
         text.append(formatCommitAnalysis(analysis.getCommitAnalysis()));

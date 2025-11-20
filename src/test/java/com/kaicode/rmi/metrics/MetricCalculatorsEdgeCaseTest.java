@@ -146,15 +146,25 @@ class MetricCalculatorsEdgeCaseTest {
     @Test
     void documentationMetricShouldDetectAllFiles() throws IOException {
         DocumentationMetric metric = new DocumentationMetric();
-        
+
+        // Mock repository info for small repository
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(100)
+                .forks(10)
+                .openIssues(5)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         when(client.hasFile("owner", "repo", "README.md")).thenReturn(true);
         when(client.hasFile("owner", "repo", "CONTRIBUTING.md")).thenReturn(true);
         when(client.hasFile("owner", "repo", "LICENSE")).thenReturn(true);
         when(client.hasFile("owner", "repo", "CODE_OF_CONDUCT.md")).thenReturn(true);
         when(client.hasFile("owner", "repo", "CHANGELOG.md")).thenReturn(true);
-        
+
         MetricResult result = metric.calculate(client, "owner", "repo");
-        
+
         assertThat(result.getDetails()).contains("README.md");
         assertThat(result.getDetails()).contains("CONTRIBUTING.md");
         assertThat(result.getDetails()).contains("LICENSE");
@@ -166,15 +176,25 @@ class MetricCalculatorsEdgeCaseTest {
     @Test
     void documentationMetricShouldShowMissingFiles() throws IOException {
         DocumentationMetric metric = new DocumentationMetric();
-        
+
+        // Mock repository info for small repository
+        RepositoryInfo smallRepo = RepositoryInfo.builder()
+                .owner("owner")
+                .name("repo")
+                .stars(50)
+                .forks(5)
+                .openIssues(2)
+                .build();
+        when(client.getRepository("owner", "repo")).thenReturn(smallRepo);
+
         when(client.hasFile("owner", "repo", "README.md")).thenReturn(false);
         when(client.hasFile("owner", "repo", "CONTRIBUTING.md")).thenReturn(false);
         when(client.hasFile("owner", "repo", "LICENSE")).thenReturn(false);
         when(client.hasFile("owner", "repo", "CODE_OF_CONDUCT.md")).thenReturn(false);
         when(client.hasFile("owner", "repo", "CHANGELOG.md")).thenReturn(false);
-        
+
         MetricResult result = metric.calculate(client, "owner", "repo");
-        
+
         assertThat(result.getDetails()).contains("Found: none");
         assertThat(result.getDetails()).contains("README.md");
         assertThat(result.getDetails()).contains("CONTRIBUTING.md");

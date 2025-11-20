@@ -56,8 +56,15 @@ class GitHubClientTest {
                 }
                 """;
 
+        String openIssuesResponse = "[{},{},{},{},{}]"; // 5 open issues
+
         mockServer.enqueue(new MockResponse()
                 .setBody(jsonResponse)
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json"));
+
+        mockServer.enqueue(new MockResponse()
+                .setBody(openIssuesResponse)
                 .setResponseCode(200)
                 .addHeader("Content-Type", "application/json"));
 

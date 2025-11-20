@@ -3,6 +3,7 @@ package com.kaicode.rmi.metrics;
 import com.kaicode.rmi.github.GitHubClient;
 import com.kaicode.rmi.model.CommitInfo;
 import com.kaicode.rmi.model.MetricResult;
+import com.kaicode.rmi.model.RepositoryInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,13 @@ public class CommitQualityMetric implements MetricCalculator {
      */
     @Override
     public MetricResult calculate(GitHubClient client, String owner, String repo) throws IOException {
-        List<CommitInfo> commits = client.getRecentCommits(owner, repo, COMMITS_TO_ANALYZE);
+        // For large repositories, analyze fewer commits to avoid API delays
+        RepositoryInfo repoInfo = client.getRepository(owner, repo);
+        boolean isLargeRepository = repoInfo.getStars() >= 10000 || repoInfo.getForks() >= 5000;
+
+        int commitsToAnalyze = isLargeRepository ? 10 : COMMITS_TO_ANALYZE;  // 10 for large repos vs 50 for normal
+
+        List<CommitInfo> commits = client.getRecentCommits(owner, repo, commitsToAnalyze);
 
         if (commits.isEmpty()) {
             return MetricResult.builder()
@@ -94,8 +101,9 @@ public class CommitQualityMetric implements MetricCalculator {
 
         double score = (goodCommits * 100.0) / totalCommits;
 
-        String details = String.format("Analyzed %d commits: %d (%.1f%%) follow conventions",
-                totalCommits, goodCommits, score);
+        String details = String.format("Analyzed %d commits: %d (%.1f%%) follow conventions%s",
+                totalCommits, goodCommits, score,
+                isLargeRepository ? " (sampled for large repository)" : "");
 
         logger.info("Commit quality score for {}/{}: {}", owner, repo, score);
 

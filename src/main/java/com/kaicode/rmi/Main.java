@@ -4,6 +4,9 @@ import com.kaicode.rmi.cli.AnalyzeCommand;
 import com.kaicode.rmi.util.EncodingInitializer;
 import picocli.CommandLine;
 
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Main entry point for Repository Maintainability Index (RMI) CLI application.
  * <p>
@@ -57,9 +60,24 @@ import picocli.CommandLine;
  * @see EncodingInitializer
  * @see com.kaicode.rmi.service.MaintainabilityService
  */
-@CommandLine.Command(name = "rmi", description = "Repository Maintainability Index - Automated GitHub repository quality assessment", version = "1.0.0", mixinStandardHelpOptions = true, subcommands = {
+@CommandLine.Command(name = "rmi", description = "Repository Maintainability Index - Automated GitHub repository quality assessment", versionProvider = VersionProvider.class, mixinStandardHelpOptions = true, subcommands = {
         AnalyzeCommand.class })
 public class Main implements Runnable {
+
+    private static final String VERSION = loadVersion();
+
+    private static String loadVersion() {
+        try (InputStream inputStream = Main.class.getClassLoader().getResourceAsStream("version.properties")) {
+            if (inputStream != null) {
+                Properties properties = new Properties();
+                properties.load(inputStream);
+                return properties.getProperty("version");
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return "1.0.1"; // current version fallback
+    }
 
     /**
      * Critical static initializer ensuring UTF-8 encoding setup before any framework initialization.
