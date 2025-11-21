@@ -301,68 +301,192 @@ public class LLMAnalyzer {
     }
 
     private String buildReadmePrompt(String readmeContent) {
+        String sampleReadme = """
+Example of excellent README structure:
+# Project Title
+Brief description of what the project does.
+
+## Features
+- Feature 1 with code example
+- Feature 2 with screenshot/link
+
+## Quick Start
+```bash
+# Installation commands
+git clone repo
+npm install
+npm start
+```
+
+## API Reference
+Detailed API documentation with examples.
+
+## Contributing
+How to contribute, development setup.
+        """;
+
         return String.format("""
-                Analyze the following README and provide scores (1-10) for:
-                - Clarity: How clear and understandable is the documentation
-                - Completeness: How complete is the documentation
-                - Newcomer Friendly: How easy is it for newcomers to get started
-                
-                Also provide 2-3 strengths and 3-5 suggestions.
-                
-                Format your response as JSON:
-                {
-                  "clarity": 7,
-                  "completeness": 5,
-                  "newcomerFriendly": 6,
-                  "strengths": ["...", "..."],
-                  "suggestions": ["...", "...", "..."]
-                }
-                
-                README content (first 1000 chars):
-                %s
-                """, readmeContent.substring(0, Math.min(1000, readmeContent.length())));
+You are an expert software documentation reviewer. Analyze this README content using industry best practices.
+
+EVALUATION CRITERIA:
+
+1. CLARITY (1-10): How easily developers can understand the project's purpose and functionality
+   - Clear project description and value proposition
+   - Well-organized sections with logical flow
+   - Consistent terminology and formatting
+   - Professional presentation quality
+
+2. COMPLETENESS (1-10): How thoroughly the README covers essential information
+   - Installation/prerequisites clearly documented
+   - Usage examples and API references
+   - Configuration, build, and deployment instructions
+   - Troubleshooting, FAQ, and known issues sections
+
+3. NEWCOMER FRIENDLY (1-10): How accessible the project is to beginners
+   - Step-by-step quick start setup
+   - Prerequisites and dependencies listed
+   - Learning curve considerations
+   - Community links and getting help sections
+
+ADDITIONAL ANALYSIS:
+1. Identify 2-3 key STRENGTHS (positive aspects)
+2. Provide 3-5 SPECIFIC, ACTIONABLE suggestions for improvement
+3. Focus on technical accuracy and practical usability
+
+Excellent README example:
+%s
+
+RESPOND ONLY WITH JSON in this exact format:
+{
+  "clarity": 8,
+  "completeness": 6,
+  "newcomerFriendly": 7,
+  "strengths": [
+    "Clear project description with specific value propositions",
+    "Good section organization with logical information flow"
+  ],
+  "suggestions": [
+    "Add Quick Start section with step-by-step setup instructions",
+    "Include code examples for main features and API usage",
+    "Add troubleshooting section for common setup issues",
+    "Include development environment configuration"
+  ]
+}
+
+README CONTENT TO ANALYZE:
+%s
+        """, sampleReadme, readmeContent.substring(0, Math.min(1500, readmeContent.length())));
     }
 
     private String buildCommitPrompt(String commitMessages) {
+        String examples = """
+EXCELLENT COMMIT EXAMPLES:
+✅ "feat: add user authentication with JWT tokens (#123)"
+✅ "fix: resolve null pointer in profile controller (#456)"
+✅ "docs: update API documentation for v2 endpoints"
+✅ "refactor: extract validation logic to separate service class"
+
+POOR COMMIT EXAMPLES:
+❌ "update stuff"
+❌ "fixed it"
+❌ "merge branch"
+❌ "Commit"
+❌ "finally works OMG"
+        """;
+
         return String.format("""
-                Analyze these commit messages and provide scores (1-10) for:
-                - Clarity: How clear are the commit messages
-                - Consistency: How consistent is the format/style
-                - Informativeness: How informative are the messages
-                
-                Also identify 3-5 patterns (positive and negative).
-                
-                Format as JSON:
-                {
-                  "clarity": 8,
-                  "consistency": 6,
-                  "informativeness": 7,
-                  "patterns": ["Positive: ...", "Negative: ..."]
-                }
-                
-                Commits:
-                %s
-                """, commitMessages.substring(0, Math.min(1000, commitMessages.length())));
+You are an expert software engineer specializing in code quality practices. Analyze these Git commit messages using professional standards.
+
+EVALUATION CRITERIA:
+
+1. CLARITY (1-10): How easily developers can understand the intent and impact
+   - Specific description of what changed
+   - Clear wording and unambiguous language
+   - Logical scope and scope of changes described
+
+2. CONSISTENCY (1-10): How uniform the message format and style are
+   - Consistent use of imperative mood ("fix", "add", "update")
+   - Regular use of conventional commit prefixes (feat:, fix:, docs:, etc.)
+   - Standardized format across messages
+
+3. INFORMATIVENESS (1-10): How much useful information is provided
+   - Clear description of the change's purpose
+   - Relevant issue/PR references when appropriate
+   - Appropriate level of detail without overwhelming length
+
+COMMIT MESSAGE CONSIDERATIONS:
+1. Identify 3-5 notable PATTERNS (positive and negative)
+2. Focus on conventional commits and best practices
+3. Consider readability and professional communication standards
+
+EXCELLENT VS POOR EXAMPLES:
+%s
+
+RESPOND ONLY WITH JSON in this exact format:
+{
+  "clarity": 7,
+  "consistency": 8,
+  "informativeness": 6,
+  "patterns": [
+    "Positive: Consistent use of imperative mood (fix, add, update)",
+    "Positive: Most messages reference relevant issue numbers (#123)",
+    "Negative: Capitalization and punctuation are inconsistent",
+    "Negative: Some messages too vague without specific changes described",
+    "Positive: Good use of conventional commit prefixes"
+  ]
+}
+
+COMMIT MESSAGES TO ANALYZE:
+%s
+        """, examples, commitMessages.substring(0, Math.min(1200, commitMessages.length())));
     }
 
     private String buildCommunityPrompt(String owner, String repo) {
         return String.format("""
-                Analyze the community health of repository %s/%s and provide scores (1-10) for:
-                - Responsiveness: How quickly are issues/PRs addressed
-                - Helpfulness: How helpful are the responses
-                - Tone: How welcoming and professional is the communication
-                
-                Provide 2-3 strengths and 3-5 suggestions.
-                
-                Format as JSON:
-                {
-                  "responsiveness": 3,
-                  "helpfulness": 3,
-                  "tone": 4,
-                  "strengths": ["..."],
-                  "suggestions": ["..."]
-                }
-                """, owner, repo);
+You are an expert in open source community management and analysis. Evaluate the community health for repository %s/%s based on typical GitHub repository metrics.
+
+EVALUATION CRITERIA:
+
+1. RESPONSIVENESS (1-10): How quickly maintainers respond to community interactions
+   - Average time to first response on issues/PRs
+   - Maintenance activity level
+   - Community engagement patterns
+
+2. HELPFULNESS (1-10): Quality of maintainer responses and support
+   - Constructive and actionable feedback
+   - Problem-solving effectiveness
+   - Guidance quality for new contributors
+
+3. TONE (1-10): Communication professionalism and approachability
+   - Welcoming and encouraging language
+   - Professional and respectful interactions
+   - Inclusive and supportive community culture
+
+COMMUNITY HEALTH INDICATORS:
+1. Analyze typical community engagement patterns
+2. Consider responsiveness expectations for repository size
+3. Evaluate communication quality and consistency
+
+RESPOND ONLY WITH JSON in this exact format:
+{
+  "responsiveness": 5,
+  "helpfulness": 6,
+  "tone": 7,
+  "strengths": [
+    "Active maintainer presence and regular updates",
+    "Well-organized issue tracking and categorization",
+    "Quick initial responses to most new issues"
+  ],
+  "suggestions": [
+    "Implement clearer contribution guidelines for new contributors",
+    "Set up contribution templates to improve issue/PR quality",
+    "Consider automated tools for faster initial acknowledgment",
+    "Create community guidelines for consistent communication standards"
+  ]
+}
+
+Repository: %s/%s - Provide analysis based on standard GitHub community health metrics.
+        """, owner, repo, owner, repo);
     }
 
     private LLMAnalysis.ReadmeAnalysis parseReadmeAnalysis(String content, AtomicInteger parseErrors) {
