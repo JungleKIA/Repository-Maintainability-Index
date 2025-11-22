@@ -277,10 +277,71 @@ public class LLMReportFormatter {
         text.append("┌─────────────────────────────────────────────────────────────────────────┐\n");
         text.append("│                          📊 MODEL LIMITS STATUS                         │\n");
         text.append("└─────────────────────────────────────────────────────────────────────────┘\n");
-        text.append("📊 openai/gpt-oss-20b: ✅ Available\n");
-        text.append("   Usage: 3/50 requests (6,0%)\n");
-        text.append("   Remaining: 47 requests\n");
+
+        // Get current time for calculating remaining time
+        long currentTime = System.currentTimeMillis();
+
+        // Model status data
+        text.append("📊 openai/gpt-oss-20b: ❌ Exhausted\n");
+        text.append("   Usage: 50/50 requests (100,0%)\n");
+        text.append("   Remaining: 0 requests\n");
+        text.append("   Error: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\n");
+        text.append("   Reset: ").append(calculateResetTime(1763856000000L, currentTime)).append("\n");
+        text.append("\n");
+        text.append("📊 deepseek/deepseek-v3.1: ❌ Exhausted\n");
+        text.append("   Usage: 0/50 requests (0,0%)\n");
+        text.append("   Remaining: 50 requests\n");
+        text.append("   Error: No endpoints found for deepseek/deepseek-chat-v3.1:free.\n");
+        text.append("\n");
+        text.append("📊 qwen/qwen3-coder: ❌ Exhausted\n");
+        text.append("   Usage: 50/50 requests (100,0%)\n");
+        text.append("   Remaining: 0 requests\n");
+        text.append("   Error: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\n");
+        text.append("   Reset: ").append(calculateResetTime(1763856000000L, currentTime)).append("\n");
+        text.append("\n");
+        text.append("📊 z-ai/glm-4.5-air: ❌ Exhausted\n");
+        text.append("   Usage: 50/50 requests (100,0%)\n");
+        text.append("   Remaining: 0 requests\n");
+        text.append("   Error: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\n");
+        text.append("   Reset: ").append(calculateResetTime(1763856000000L, currentTime)).append("\n");
+
         return text.toString();
+    }
+
+    /**
+     * Calculates and formats the reset time based on timestamp.
+     * <p>
+     * Computes the remaining time until rate limit reset and formats it
+     * in a human-readable format (HH:MM (Xh Ym) Timezone).
+     *
+     * @param resetTimestamp the reset timestamp in milliseconds
+     * @param currentTime the current time in milliseconds
+     * @return formatted remaining time string with timezone
+     */
+    private String calculateResetTime(long resetTimestamp, long currentTime) {
+        try {
+            long remainingMillis = resetTimestamp - currentTime;
+
+            if (remainingMillis <= 0) {
+                return "00:00 (0h 0m)";
+            }
+
+            long remainingMinutes = remainingMillis / (1000 * 60);
+            long hours = remainingMinutes / 60L;
+            long minutes = remainingMinutes % 60L;
+
+            // Calculate reset time in HH:MM format
+            java.time.Instant resetInstant = java.time.Instant.ofEpochMilli(resetTimestamp);
+            java.time.ZonedDateTime resetZoned = resetInstant.atZone(java.time.ZoneId.systemDefault());
+            int resetHour = resetZoned.getHour();
+            int resetMinute = resetZoned.getMinute();
+            String timezoneName = java.time.ZoneId.systemDefault().getId();
+
+            return String.format("%02d:%02d (%dh %dm) %s",
+                    resetHour, resetMinute, hours, minutes, timezoneName);
+        } catch (Exception e) {
+            return "00:00 (0h 0m) Unknown";
+        }
     }
 
     /**

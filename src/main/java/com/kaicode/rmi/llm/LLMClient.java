@@ -122,7 +122,21 @@ public class LLMClient {
      * @since 1.0
      * @see LLMResponse
      */
+    /**
+     * Gets the LLM model identifier used by this client.
+     * <p>
+     * Returns the specific model name or identifier that this client uses
+     * for all LLM API requests (e.g., "openai/gpt-oss-20b:free").
+     *
+     * @return the model identifier string, never null
+     */
+    public String getModel() {
+        return model;
+    }
+
     public LLMResponse analyze(String prompt) throws IOException {
+        logger.info("Sending LLM request to model: {}", model);
+
         JsonObject requestBody = new JsonObject();
         requestBody.addProperty("model", model);
 
@@ -149,8 +163,13 @@ public class LLMClient {
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "No error body";
-                throw new IOException(String.format("LLM API request failed: %d - %s",
-                        response.code(), errorBody));
+
+                // Enhanced error logging with model and provider info
+                logger.warn("LLM API request failed for model '{}': HTTP {} - {}",
+                    model, response.code(), extractErrorMessage(errorBody));
+
+                throw new IOException(String.format("LLM API request failed: %d (model: %s) - %s",
+                        response.code(), model, errorBody));
             }
 
             String responseBody = response.body().string();
@@ -176,6 +195,50 @@ public class LLMClient {
 
             return new LLMResponse(content, tokensUsed);
         }
+    }
+
+    /**
+     * Extracts a clean, readable error message from the raw API error response.
+     * <p>
+     * Handles OpenRouter API error format and extracts the most relevant error information
+     * for better logging and debugging. Falls back to the full response if extraction fails.
+     *
+     * @param errorBody the raw error response body from the API
+     * @return a clean, readable error message suitable for logging
+     */
+    private String extractErrorMessage(String errorBody) {
+        if (errorBody == null || errorBody.trim().isEmpty()) {
+            return "No error details available";
+        }
+
+        try {
+            // Try to parse as JSON and extract meaningful error message
+            JsonObject errorJson = gson.fromJson(errorBody, JsonObject.class);
+
+            if (errorJson.has("error")) {
+                JsonObject errorObj = errorJson.getAsJsonObject("error");
+
+                // Extract main error message
+                if (errorObj.has("message")) {
+                    String message = errorObj.get("message").getAsString();
+
+                    // Add code if available
+                    if (errorObj.has("code")) {
+                        int code = errorObj.get("code").getAsInt();
+                        message = String.format("[%d] %s", code, message);
+                    }
+
+                    return message;
+                }
+            }
+        } catch (Exception e) {
+            // If JSON parsing fails, return original or truncated version
+            logger.debug("Failed to parse error body as JSON: {}", e.getMessage());
+        }
+
+        // Fallback: return truncated version of the raw error
+        return errorBody.length() > 200 ?
+            errorBody.substring(0, 200) + "..." : errorBody;
     }
 
     /**

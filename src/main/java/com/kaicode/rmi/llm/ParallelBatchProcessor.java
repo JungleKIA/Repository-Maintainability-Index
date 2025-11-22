@@ -63,18 +63,18 @@ public class ParallelBatchProcessor {
     }
 
     /**
-     * Выполняет batch LLM анализ с параллелизацией.
+     * Executes batch LLM analysis with parallelization.
      *
-     * Если batch processing недоступен - gracefully деградирует к sequential mode.
+     * If batch processing unavailable - gracefully degrades to sequential mode.
      *
-     * @param batchPrompt унифицированный промпт для всех анализов
-     * @return LLMResponse с результатами batch обработки
+     * @param batchPrompt unified prompt for all analyses
+     * @return LLMResponse with batch processing results
      */
     public LLMClient.LLMResponse executeBatchAsync(String batchPrompt) {
         try {
             logger.debug("🔄 Executing parallel batch LLM analysis");
 
-            // Wrap LLM call in CompletableFuture для истинной параллелизации
+            // Wrap LLM call in CompletableFuture for true parallelization
             CompletableFuture<LLMClient.LLMResponse> future = CompletableFuture
                 .supplyAsync(() -> {
                     try {
@@ -82,7 +82,7 @@ public class ParallelBatchProcessor {
                         return llmClient.analyze(batchPrompt);
                     } catch (Exception e) {
                         logger.warn("⚠️ Parallel batch LLM call failed, will try sequential: {}", e.getMessage());
-                        // Return null для fallback logic ниже
+                        // Return null for fallback logic below
                         return null;
                     }
                 }, executor)
@@ -95,7 +95,7 @@ public class ParallelBatchProcessor {
                     return result;
                 });
 
-            // Wait for completion с timeout
+            // Wait for completion with timeout
             LLMClient.LLMResponse result = future.get(timeoutSeconds + 2, TimeUnit.SECONDS);
 
             if (result == null) {
@@ -122,12 +122,12 @@ public class ParallelBatchProcessor {
     }
 
     /**
-     * Выполняет несколько независимых LLM запросов параллельно.
+     * Executes multiple independent LLM requests in parallel.
      *
-     * Полезно для future extensions где нужно делать multiple different requests.
+     * Useful for future extensions where multiple different requests are needed.
      *
-     * @param prompts массив промптов для parallel выполнения
-     * @return массив LLMResponse в том же порядке
+     * @param prompts array of prompts for parallel execution
+     * @return array of LLMResponse in the same order
      */
     public LLMClient.LLMResponse[] executeMultipleParallel(String[] prompts) {
         if (prompts.length <= 1) {
@@ -210,14 +210,14 @@ public class ParallelBatchProcessor {
     }
 
     /**
-     * Проверяет состояние processor.
+     * Checks the processor state.
      */
     public boolean isAvailable() {
         return !executor.isShutdown() && !executor.isTerminated();
     }
 
     /**
-     * Возвращает текущее число активных потоков.
+     * Returns the current number of active threads.
      */
     public int getActiveThreads() {
         if (executor instanceof java.util.concurrent.ThreadPoolExecutor) {
