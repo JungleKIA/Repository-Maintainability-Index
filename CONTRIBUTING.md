@@ -125,6 +125,31 @@ open target/site/jacoco/index.html
 
 ## Coding Standards
 
+### Language Policy 🌍
+
+**CRITICAL**: All code, comments, documentation, and commit messages **MUST be in English**.
+
+- ✅ **DO**: Write all Javadoc in English
+- ✅ **DO**: Write all code comments in English
+- ✅ **DO**: Write commit messages in English
+- ✅ **DO**: Write documentation in English
+- ✅ **DO**: Name variables/methods/classes in English
+- ❌ **DON'T**: Use any non-English language in code or comments
+- ❌ **DON'T**: Mix languages in the same file
+
+**Why?** This project targets an international audience. English-only ensures:
+- Universal accessibility
+- Consistent code reviews
+- Better collaboration across borders
+- Professional production standards
+
+**Verification**: Run this before submitting PR:
+```bash
+# Check for non-English characters
+grep -r '[А-Яа-яЁё]' --include="*.java" --include="*.md" src/ docs/ README.md
+# Should return: No matches
+```
+
 ### Java Style Guide
 
 We follow **Google Java Style Guide** with some modifications:
@@ -332,11 +357,13 @@ mvn test -Dgroups="!integration"
 ### 1. Before Creating PR
 
 Ensure your changes:
+- [ ] **All code/comments/documentation in English only** ✅
 - [ ] Follow coding standards
 - [ ] Include tests (90%+ coverage)
 - [ ] Pass all existing tests
 - [ ] Update documentation
 - [ ] Add entry to CHANGELOG.md (if applicable)
+- [ ] Run language verification: `grep -r '[А-Яа-яЁё]' --include="*.java" src/`
 
 ### 2. Create Pull Request
 
@@ -382,11 +409,13 @@ Closes #123
 - [ ] Manual testing performed
 
 ## Checklist
+- [ ] **All content is in English only** (no Russian or other languages)
 - [ ] Code follows style guidelines
 - [ ] Self-review performed
 - [ ] Documentation updated
 - [ ] Tests pass locally
 - [ ] CHANGELOG.md updated
+- [ ] Language verification passed
 ```
 
 ### 4. Review Process

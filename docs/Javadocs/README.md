@@ -15,12 +15,13 @@ This repository contains comprehensive Javadoc documentation guides for Java dev
 - Full doclint compliance explanations
 - Best practices and common mistakes checklist
 
-#### 2. **JAVADOC_GUIDE_RU.md** (Russian, 2755 lines)
-- Complete, production-ready Javadoc guide in Russian
+#### 2. **JAVADOC_GUIDE_RU.md** (Alternative Language, 2755 lines)
+- Complete, production-ready Javadoc guide in alternative language
 - Identical structure and content to English version
-- **NEW: Comprehensive section on documenting getters and setters** (геттеры и сеттеры)
+- **NEW: Comprehensive section on documenting getters and setters**
 - Full translation maintaining technical accuracy
 - All examples and checklists included
+- **Note**: For international teams, refer to JAVADOC_GUIDE_EN.md as the primary reference
 
 ### LLM System Prompt References
 
@@ -32,27 +33,29 @@ This repository contains comprehensive Javadoc documentation guides for Java dev
 - All doclint requirements condensed
 - Perfect for AI-assisted Javadoc generation and correction
 
-#### 4. **JAVADOC_REFERENCE_FOR_LLM_RU.md** (Russian, 968 lines)
-- **Compact reference guide in Russian for LLM context**
+#### 4. **JAVADOC_REFERENCE_FOR_LLM_RU.md** (Alternative Language, 968 lines)
+- **Compact reference guide in alternative language for LLM context**
 - Same structure as English LLM reference
-- **NEW: Added getters/setters section** (геттеры и сеттеры со всеми паттернами)
-- Optimized for Russian-speaking LLM applications
+- **NEW: Added getters/setters section with all patterns**
+- Optimized for international LLM applications
 - All critical information in condensed format
+- **Note**: English version (JAVADOC_REFERENCE_FOR_LLM.md) is recommended for production use
 
 ---
 
 ## 🎯 When to Use Each Guide
 
 ### For Human Developers
-Use **JAVADOC_GUIDE_EN.md** or **JAVADOC_GUIDE_RU.md**:
+Use **JAVADOC_GUIDE_EN.md** (or alternative language version if needed):
 - Learning Javadoc best practices
 - Reference during code reviews
 - Team onboarding and training
 - Detailed examples and explanations needed
 - Understanding the "why" behind rules
+- **Recommended**: JAVADOC_GUIDE_EN.md for international teams
 
 ### For LLM Integration
-Use **JAVADOC_REFERENCE_FOR_LLM.md** or **JAVADOC_REFERENCE_FOR_LLM_RU.md**:
+Use **JAVADOC_REFERENCE_FOR_LLM.md** (or alternative language version if needed):
 - System prompt for AI code generators
 - Context for automated Javadoc generation
 - Quick reference for code completion tools
@@ -95,10 +98,10 @@ Use **JAVADOC_REFERENCE_FOR_LLM.md** or **JAVADOC_REFERENCE_FOR_LLM_RU.md**:
 
 #### Step 1: Read the Guide
 ```bash
-# English
+# Primary (English) - Recommended for production
 cat JAVADOC_GUIDE_EN.md
 
-# Russian
+# Alternative language version (optional)
 cat JAVADOC_GUIDE_RU.md
 ```
 
