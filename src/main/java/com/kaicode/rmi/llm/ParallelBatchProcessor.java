@@ -10,17 +10,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * 🚀 PARALLEL BATCH PROCESSOR - истинная параллелизация LLM операций
+ * 🚀 PARALLEL BATCH PROCESSOR - True parallel LLM operations
  *
- * Управляет параллельным выполнением batch LLM запросов для максимальной производительности.
- * Поддерживает connection pooling, timeout management и graceful error handling.
+ * Manages parallel execution of batch LLM requests for maximum performance.
+ * Supports connection pooling, timeout management and graceful error handling.
  *
- * Архитектура:
- * - ExecutorService для параллельного выполнения
- * - Connection pooling для simultaneous требований
- * - Timeout control с configurable values
- * - Retry logic с exponential backoff
- * - Circuit breaker pattern для fault tolerance
+ * Architecture:
+ * - ExecutorService for parallel execution
+ * - Connection pooling for simultaneous requests
+ * - Timeout control with configurable values
+ * - Retry logic with exponential backoff
+ * - Circuit breaker pattern for fault tolerance
  */
 public class ParallelBatchProcessor {
     private static final Logger logger = LoggerFactory.getLogger(ParallelBatchProcessor.class);
@@ -31,12 +31,12 @@ public class ParallelBatchProcessor {
     private final int maxConcurrentRequests;
 
     /**
-     * Создает parallel batch processor с оптимизированной конфигурацией.
+     * Creates parallel batch processor with optimized configuration.
      *
-     * @param llmClient LLM client для API операций
-     * @param maxConcurrentRequests максимальное число одновременных запросов (default: 3)
-     * @param timeoutSeconds timeout для каждого запроса (default: 30)
-     * @param threadPoolSize размер thread pool (default: CPU cores)
+     * @param llmClient LLM client for API operations
+     * @param maxConcurrentRequests maximum number of concurrent requests (default: 3)
+     * @param timeoutSeconds timeout for each request (default: 30)
+     * @param threadPoolSize thread pool size (default: CPU cores)
      */
     public ParallelBatchProcessor(LLMClient llmClient,
                                  int maxConcurrentRequests,
@@ -55,7 +55,7 @@ public class ParallelBatchProcessor {
     }
 
     /**
-     * Factory method с default конфигурацией.
+     * Factory method with default configuration.
      */
     public static ParallelBatchProcessor createDefault(LLMClient llmClient) {
         int threadPoolSize = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
