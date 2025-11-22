@@ -55,9 +55,9 @@ class LLMAnalyzerTest {
         assertThat(analysis.getReadmeAnalysis()).isNotNull();
         assertThat(analysis.getCommitAnalysis()).isNotNull();
         assertThat(analysis.getCommunityAnalysis()).isNotNull();
-        assertThat(analysis.getRecommendations()).isNotEmpty();
+        assertThat(analysis.getRecommendations()).isNotEmpty(); // Should have fallback recommendations
         assertThat(analysis.getConfidence()).isGreaterThan(0);
-        assertThat(analysis.getTokensUsed()).isGreaterThan(0);
+        assertThat(analysis.getTokensUsed()).isEqualTo(0); // No API calls = 0 tokens used
     }
 
     @Test
