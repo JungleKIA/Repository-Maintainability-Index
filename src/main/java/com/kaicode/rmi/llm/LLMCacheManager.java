@@ -10,15 +10,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 🧠 SMART CACHE MANAGER - интеллектуальное кеширование LLM результатов
+ * Smart cache manager for LLM results.
+ * <p>
+ * Improves performance and reduces costs through intelligent caching.
+ * Features:
+ * <ul>
+ *   <li>Content-based hashing for unique identification</li>
+ *   <li>TTL-based expiration for data freshness</li>
+ *   <li>LRU eviction for memory optimization</li>
+ *   <li>Repository-specific cache keys</li>
+ *   <li>Hit/miss ratio statistics</li>
+ * </ul>
  *
- * Улучшает производительность и снижает costs за счет умного кеширования.
- * Функции:
- * - Content-based hashing для уникальной идентификации
- * - TTL-based expiration для актуальности данных
- * - LRU eviction для memory optimization
- * - Repository-specific cache keys
- * - Hit/miss ratio statistics
+ * @since 1.0
  */
 public class LLMCacheManager {
     private static final Logger logger = LoggerFactory.getLogger(LLMCacheManager.class);
@@ -38,7 +42,9 @@ public class LLMCacheManager {
     private long misses = 0;
 
     /**
-     * Cache entry с metadata для управления.
+     * Cache entry with metadata for management.
+     *
+     * @since 1.0
      */
     private static class CacheEntry {
         final LLMClient.LLMResponse response;
@@ -61,11 +67,12 @@ public class LLMCacheManager {
     }
 
     /**
-     * Создает smart cache manager с оптимизированной конфигурацией.
+     * Creates a smart cache manager with optimized configuration.
      *
-     * @param ttlHours время жизни cache (default: 24 hours)
-     * @param maxEntriesPerRepository максимум entries per репозиторий (default: 50)
-     * @param maxTotalEntries максимум всего entries (default: 1000)
+     * @param ttlHours cache time-to-live in hours (default: 24 hours)
+     * @param maxEntriesPerRepository maximum entries per repository (default: 50)
+     * @param maxTotalEntries maximum total entries across all repositories (default: 1000)
+     * @since 1.0
      */
     public LLMCacheManager(int ttlHours, int maxEntriesPerRepository, int maxTotalEntries) {
         this.ttlMillis = ttlHours * 60 * 60 * 1000L; // Convert to milliseconds
@@ -81,19 +88,26 @@ public class LLMCacheManager {
     }
 
     /**
-     * Factory method с default конфигурацией.
+     * Factory method with default configuration.
+     * <p>
+     * Creates a cache manager with 24 hours TTL, 50 entries per repository,
+     * and 1000 total entries.
+     *
+     * @return a new cache manager with default settings
+     * @since 1.0
      */
     public static LLMCacheManager createDefault() {
         return new LLMCacheManager(24, 50, 1000); // 24 hours, 50 per repo, 1000 total
     }
 
     /**
-     * Пытается получить cached результат для repository analysis.
+     * Attempts to retrieve a cached result for repository analysis.
      *
      * @param owner repository owner
      * @param repo repository name
      * @param contentHash hash of input content (README + commits)
-     * @return cached LLMResponse или null если нет в cache
+     * @return cached LLMResponse, or null if not in cache or expired
+     * @since 1.0
      */
     public LLMClient.LLMResponse get(String owner, String repo, String contentHash) {
         String key = generateCacheKey(owner, repo, contentHash);
@@ -117,12 +131,13 @@ public class LLMCacheManager {
     }
 
     /**
-     * Сохраняет результат в cache.
+     * Stores a result in the cache.
      *
      * @param owner repository owner
      * @param repo repository name
      * @param contentHash hash of input content
-     * @param response LLM response для кеширования
+     * @param response LLM response to cache
+     * @since 1.0
      */
     public void put(String owner, String repo, String contentHash, LLMClient.LLMResponse response) {
         if (response == null || response.getContent() == null) {
@@ -148,7 +163,13 @@ public class LLMCacheManager {
     }
 
     /**
-     * Проверяет содержится ли результат в cache.
+     * Checks if a result is contained in the cache.
+     *
+     * @param owner repository owner
+     * @param repo repository name
+     * @param contentHash hash of input content
+     * @return true if cached and valid, false otherwise
+     * @since 1.0
      */
     public boolean contains(String owner, String repo, String contentHash) {
         String key = generateCacheKey(owner, repo, contentHash);
@@ -157,7 +178,11 @@ public class LLMCacheManager {
     }
 
     /**
-     * Очищает cache для конкретного репозитория.
+     * Clears the cache for a specific repository.
+     *
+     * @param owner repository owner
+     * @param repo repository name
+     * @since 1.0
      */
     public void clearRepository(String owner, String repo) {
         String repoKey = generateRepoKey(owner, repo);
@@ -173,7 +198,9 @@ public class LLMCacheManager {
     }
 
     /**
-     * Полная очистка cache.
+     * Clears the entire cache.
+     *
+     * @since 1.0
      */
     public void clearAll() {
         cache.clear();
@@ -184,7 +211,10 @@ public class LLMCacheManager {
     }
 
     /**
-     * Возвращает cache statistics.
+     * Returns cache statistics.
+     *
+     * @return statistics about cache performance and usage
+     * @since 1.0
      */
     public CacheStats getStats() {
         long totalRequests = hits + misses;
@@ -203,7 +233,9 @@ public class LLMCacheManager {
     }
 
     /**
-     * Reset hit/miss статистики.
+     * Resets hit/miss statistics.
+     *
+     * @since 1.0
      */
     public void resetStats() {
         hits = 0;
@@ -211,7 +243,9 @@ public class LLMCacheManager {
     }
 
     /**
-     * Cleanup expired entries и enforce limits.
+     * Performs cache maintenance by cleaning up expired entries and enforcing limits.
+     *
+     * @since 1.0
      */
     public void maintenance() {
         cleanupExpired();
@@ -317,8 +351,13 @@ public class LLMCacheManager {
     }
 
     /**
-     * Генерирует content hash для кеширования.
-     * Использует SHA-256 для consistency.
+     * Generates a content hash for caching.
+     * <p>
+     * Uses SHA-256 for consistency. Falls back to simple hash if SHA-256 is unavailable.
+     *
+     * @param content the content to hash
+     * @return a hash string (first 16 characters of Base64-encoded SHA-256)
+     * @since 1.0
      */
     public static String generateContentHash(String content) {
         try {
@@ -332,7 +371,9 @@ public class LLMCacheManager {
     }
 
     /**
-     * Statistics container для cache analytics.
+     * Statistics container for cache analytics.
+     *
+     * @since 1.0
      */
     public static class CacheStats {
         public final int totalEntries;
