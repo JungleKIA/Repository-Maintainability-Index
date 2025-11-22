@@ -101,43 +101,41 @@ public class LLMAnalyzer {
      * @since 1.0
      */
     public LLMAnalysis analyze(GitHubClient githubClient, String owner, String repo) throws IOException {
-        logger.info("Starting LLM analysis for {}/{}", owner, repo);
+        logger.info("Starting ENHANCED BATCH LLM analysis for {}/{} (3 analyses → 1 batch call)", owner, repo);
 
         String llmMode = "REAL"; // Assume real analysis by default
         int totalTokens = 0;
         AtomicInteger parseErrors = new AtomicInteger(0); // Count actual parsing failures
         AtomicInteger apiErrors = new AtomicInteger(0);    // Count API failures (429, network issues)
 
+        // 🚀 NEW: BATCH PROCESSING - Collect all data first, then single batch LLM call
         String readmeContent = fetchReadme(githubClient, owner, repo);
-        LLMAnalysis.ReadmeAnalysis readmeAnalysis = analyzeReadme(readmeContent, apiErrors, parseErrors);
-        totalTokens += 500;
-
         List<CommitInfo> commits = githubClient.getRecentCommits(owner, repo, 30);
-        LLMAnalysis.CommitAnalysis commitAnalysis = analyzeCommits(commits, apiErrors, parseErrors);
-        totalTokens += 400;
 
-        LLMAnalysis.CommunityAnalysis communityAnalysis = analyzeCommunity(owner, repo, apiErrors, parseErrors);
-        totalTokens += 300;
+        // Execute batch analysis - all 3 analyses in ONE LLM call
+        BatchAnalysisResult batchResult = executeBatchAnalysis(readmeContent, commits, owner, repo);
 
-        // More accurate mode detection based on actual API behavior
-        // If API responses were invalid/unparseable, it's effectively fallback mode
-        boolean hasApiFailures = (apiErrors.get() + parseErrors.get()) >= 1;
-        boolean hasMultipleFallbacks = (readmeAnalysis.getClarity() <= 6 ||
-                                       commitAnalysis.getClarity() <= 6 ||
-                                       communityAnalysis.getResponsiveness() <= 3);
+        // Unpack batch results back to individual analyses
+        LLMAnalysis.ReadmeAnalysis readmeAnalysis = batchResult.readmeAnalysis;
+        LLMAnalysis.CommitAnalysis commitAnalysis = batchResult.commitAnalysis;
+        LLMAnalysis.CommunityAnalysis communityAnalysis = batchResult.communityAnalysis;
+        totalTokens = batchResult.tokensUsed;
 
-        if (hasApiFailures || (parseErrors.get() >= 2 && hasMultipleFallbacks)) {
-            llmMode = "FALLBACK";
-        }
+        // Update error counters from batch operation
+        parseErrors.addAndGet(batchResult.parseErrors);
+        apiErrors.addAndGet(batchResult.apiErrors);
 
-        List<LLMAnalysis.AIRecommendation> recommendations = generateRecommendations(
-                readmeAnalysis, commitAnalysis, communityAnalysis);
-        totalTokens += 200;
+        // Enhanced mode detection with quality metrics
+        llmMode = determineAnalysisMode(apiErrors.get(), parseErrors.get(), batchResult.qualityScore, readmeAnalysis, commitAnalysis, communityAnalysis);
 
-        double confidence = calculateConfidence(readmeAnalysis, commitAnalysis, communityAnalysis);
+        List<LLMAnalysis.AIRecommendation> recommendations = generateEnhancedRecommendations(
+                readmeAnalysis, commitAnalysis, communityAnalysis, batchResult.qualityScore);
 
-        logger.info("Completed LLM analysis for {}/{}: confidence={}, tokens={}, mode={}, parseErrors={}, apiErrors={}",
-                owner, repo, confidence, totalTokens, llmMode, parseErrors, apiErrors);
+        // 🔄 ENHANCED CONFIDENCE SCORING with quality weights
+        double confidence = calculateEnhancedConfidence(readmeAnalysis, commitAnalysis, communityAnalysis, llmMode, batchResult.qualityScore);
+
+        logger.info("✅ COMPLETED ENHANCED BATCH analysis for {}/{}: confidence={:.1f}, tokens={}, mode={}, quality={}, parseErrors={}, apiErrors={}",
+                owner, repo, confidence, totalTokens, llmMode, batchResult.qualityScore, parseErrors, apiErrors);
 
         return LLMAnalysis.builder()
                 .readmeAnalysis(readmeAnalysis)
@@ -148,6 +146,42 @@ public class LLMAnalyzer {
                 .tokensUsed(totalTokens)
                 .llmMode(llmMode)
                 .build();
+    }
+
+    /**
+     * 🚀 NEW: Executes all 3 LLM analyses in ONE batch call instead of 3 separate calls.
+     * Dramatically reduces API costs and improves response times.
+     */
+    private BatchAnalysisResult executeBatchAnalysis(String readmeContent, List<CommitInfo> commits, String owner, String repo) {
+        try {
+            String batchPrompt = buildBatchPrompt(readmeContent, commits, owner, repo);
+            LLMClient.LLMResponse response = llmClient.analyze(batchPrompt);
+
+            BatchAnalysisResult result = parseBatchResponse(response.getContent());
+            result.tokensUsed = response.getTokensUsed();
+
+            logger.debug("✅ Batch LLM analysis successful: {} tokens consumed", result.tokensUsed);
+            return result;
+
+        } catch (Exception e) {
+            logger.warn("❌ Batch LLM analysis failed, falling back to individual calls: {}", e.getMessage());
+
+            // Fallback to individual calls if batch fails
+            AtomicInteger fallbackApiErrors = new AtomicInteger(0);
+            AtomicInteger fallbackParseErrors = new AtomicInteger(0);
+
+            LLMAnalysis.ReadmeAnalysis readmeAnalysis = analyzeReadme(readmeContent, fallbackApiErrors, fallbackParseErrors);
+            LLMAnalysis.CommitAnalysis commitAnalysis = analyzeCommits(commits, fallbackApiErrors, fallbackParseErrors);
+            LLMAnalysis.CommunityAnalysis communityAnalysis = analyzeCommunity(owner, repo, fallbackApiErrors, fallbackParseErrors);
+
+            return new BatchAnalysisResult(
+                    readmeAnalysis, commitAnalysis, communityAnalysis,
+                    1200, // total tokens from individual calls
+                    fallbackApiErrors.get(),
+                    fallbackParseErrors.get(),
+                    60.0 // lower quality score for fallback
+            );
+        }
     }
 
     private String fetchReadme(GitHubClient client, String owner, String repo) {
@@ -618,6 +652,387 @@ Repository: %s/%s - Provide analysis based on standard GitHub community health m
             }
         }
         return list;
+    }
+
+    /**
+     * 🚀 NEW: Enhanced recommendations generator with quality score consideration
+     */
+    private List<LLMAnalysis.AIRecommendation> generateEnhancedRecommendations(
+            LLMAnalysis.ReadmeAnalysis readme,
+            LLMAnalysis.CommitAnalysis commit,
+            LLMAnalysis.CommunityAnalysis community,
+            double qualityScore) {
+
+        List<LLMAnalysis.AIRecommendation> recommendations = new ArrayList<>();
+        boolean isLowQuality = qualityScore < 70;
+
+        if (community.getResponsiveness() < 5) {
+            recommendations.add(new LLMAnalysis.AIRecommendation(
+                    "Improve response time to community",
+                    "Community members are not receiving timely responses - high impact issue",
+                    85, 84, isLowQuality ? "🔴 [LOW QUALITY]" : "🔴"
+            ));
+        }
+
+        if (readme.getCompleteness() < 6) {
+            recommendations.add(new LLMAnalysis.AIRecommendation(
+                    "Complete README documentation sections",
+                    "Essential installation, usage, and contribution sections missing",
+                    75, 87, isLowQuality ? "🔴 [LOW QUALITY]" : "🔴"
+            ));
+        }
+
+        if (community.getHelpfulness() < 5) {
+            recommendations.add(new LLMAnalysis.AIRecommendation(
+                    "Enhance response quality and helpfulness",
+                    "Community responses need more actionable guidance and detailed explanations",
+                    70, 84, isLowQuality ? "🟡 [LOW QUALITY]" : "🟡"
+            ));
+        }
+
+        if (commit.getConsistency() < 7) {
+            recommendations.add(new LLMAnalysis.AIRecommendation(
+                    "Standardize commit message formatting",
+                    "Commit messages need consistent style and conventional commit prefixes",
+                    55, 89, "🟡"
+            ));
+        }
+
+        return recommendations.stream()
+                .sorted((a, b) -> Integer.compare(b.getImpact(), a.getImpact()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 🚀 NEW: Enhanced confidence calculation with quality metrics and mode consideration
+     */
+    private double calculateEnhancedConfidence(LLMAnalysis.ReadmeAnalysis readme,
+                                             LLMAnalysis.CommitAnalysis commit,
+                                             LLMAnalysis.CommunityAnalysis community,
+                                             String llmMode, double qualityScore) {
+
+        // Weight different components based on perceived reliability
+        double readmeWeight = 1.0;
+        double commitWeight = 1.2; // Commits tend to be more objective
+        double communityWeight = 0.8; // Community metrics can be subjective
+
+        // Calculate weighted scores
+        double readmeScore = (readme.getClarity() + readme.getCompleteness() + readme.getNewcomerFriendly()) / 3.0;
+        double commitScore = (commit.getClarity() + commit.getConsistency() + commit.getInformativeness()) / 3.0;
+        double communityScore = (community.getResponsiveness() + community.getHelpfulness() + community.getTone()) / 3.0;
+
+        double weightedTotal = (readmeScore * readmeWeight + commitScore * commitWeight + communityScore * communityWeight);
+        double weightedCount = readmeWeight + commitWeight + communityWeight;
+
+        // Base confidence from weighted scores (0-100)
+        double baseConfidence = Math.min(95.0, (weightedTotal / weightedCount) * 8.33 + 33.33);
+
+        // Quality score adjustment (0-10% adjustment)
+        double qualityAdjustment = ((qualityScore - 50) / 50) * 15; // Range -15 to +15
+
+        // Mode adjustment based on analysis reliability
+        double modeAdjustment = switch (llmMode) {
+            case "REAL" -> 0.0; // No adjustment for real LLM analysis
+            case "FALLBACK" -> -10.0; // Significant penalty for fallback analysis
+            default -> -5.0; // Slight penalty for unknown modes
+        };
+
+        double finalConfidence = baseConfidence + qualityAdjustment + modeAdjustment;
+        return Math.max(25.0, Math.min(95.0, finalConfidence));
+    }
+
+    /**
+     * 🚀 NEW: Enhanced mode detection with quality metrics consideration
+     */
+    private String determineAnalysisMode(int apiErrors, int parseErrors, double qualityScore,
+                                       LLMAnalysis.ReadmeAnalysis readme,
+                                       LLMAnalysis.CommitAnalysis commit,
+                                       LLMAnalysis.CommunityAnalysis community) {
+
+        // API failures always trigger fallback or error mode
+        if (apiErrors > 0) {
+            return "API_ERROR";
+        }
+
+        // Multiple parsing errors indicate significant LLM response issues
+        if (parseErrors > 1) {
+            return "PARSE_ERROR";
+        }
+
+        // Low quality scores might indicate problematic LLM responses
+        if (qualityScore < 40) {
+            return "QUALITY_LOW";
+        }
+
+        // Check for suspiciously similar fallback default scores
+        // (indicating potential parsing failures)
+        boolean hasFallbackSimilarity = false;
+        if (readme.getClarity() == 7 && readme.getCompleteness() == 5 && readme.getNewcomerFriendly() == 6 &&
+            community.getResponsiveness() == 3 && community.getHelpfulness() == 3 && community.getTone() == 4) {
+            hasFallbackSimilarity = true;
+        }
+
+        // Very low scores across all analyses indicate fallback usage
+        boolean hasMultipleLowScores = (readme.getClarity() <= 4 &&
+                                       commit.getClarity() <= 4 &&
+                                       community.getResponsiveness() <= 3);
+
+        if (hasFallbackSimilarity || hasMultipleLowScores || parseErrors > 0) {
+            return "FALLBACK";
+        }
+
+        return "REAL"; // All systems operational, real LLM analysis used
+    }
+
+    /**
+     * 🚀 NEW: Constructs a single batch prompt for all 3 analyses (README, Commits, Community)
+     * Dramatically reduces API calls by 66% (3 → 1 call per repository).
+     */
+    private String buildBatchPrompt(String readmeContent, List<CommitInfo> commits, String owner, String repo) {
+        // Prepare commit messages for batch
+        String commitMessages = commits.stream()
+                .limit(20)
+                .map(CommitInfo::getMessage)
+                .collect(Collectors.joining("\n"));
+
+        // Excellent examples for better accuracy
+        String excellentCommitExamples = """
+EXCELLENT commits: "feat: add JWT authentication (#123)"
+                   "fix: resolve null pointer in UserService (#456)"
+                   "docs: update API schema documentation (#789)"
+                   "refactor: extract validation to separate module"
+                   "chore: update dependency versions" """;
+
+        String excellentReadmeStructure = """
+# Project Title
+Clear description and value proposition.
+
+## Features
+- Feature 1 with code example
+- Feature 2 with usage screenshot
+
+## Quick Start
+```bash
+# Prerequisites
+npm install
+npm run dev
+```
+
+## Installation
+Detailed setup with prerequisites and build steps.
+
+## API Reference
+Complete endpoints with examples and responses.
+        """;
+
+        return String.format("""
+You are a senior software engineering consultant performing comprehensive repository quality analysis.
+Evaluate this repository holistically across ALL THREE critical dimensions.
+
+REPOSITORY: %s/%s
+
+ANALYSIS COMPONENTS:
+
+1. 📖 README DOCUMENTATION QUALITY (analyze the content provided)
+2. 📝 COMMIT MESSAGE QUALITY (analyze the commit patterns below)
+3. 👥 COMMUNITY HEALTH (infer from repository metrics and typical GitHub practices)
+
+
+*** READABILITY ONLY/ANALYSIS NOTES ***
+Excellent README structure follows:
+%s
+
+Excellent commit patterns are:
+%s
+
+Repository community health considerations:
+- Open source projects need documented contribution guidelines
+- Maintainers should respond within reasonable timeframes (typically 1-7 days)
+- Issues/PRs should be properly triaged and categorized
+- Staff issues (help wanted, good first issue) show community adoption
+
+
+ANALYSIS TASK:
+Provide a comprehensive assessment combining all three areas with integrated insights.
+
+REQUIRED RESPONSE FORMAT:
+{
+  "readme": {
+    "clarity": 8,
+    "completeness": 7,
+    "newcomerFriendly": 8,
+    "strengths": ["Clear project description", "Good section organization"],
+    "suggestions": ["Add usage examples", "Include troubleshooting"]
+  },
+
+  "commits": {
+    "clarity": 7,
+    "consistency": 8,
+    "informativeness": 6,
+    "patterns": [
+      "Positive: Regular use of conventional commit prefixes",
+      "Positive: Issue references in commit messages",
+      "Negative: Inconsistent punctuation",
+      "Positive: Imperative mood commonly used"
+    ]
+  },
+
+  "community": {
+    "responsiveness": 6,
+    "helpfulness": 7,
+    "tone": 8,
+    "strengths": ["Active community engagement", "Well-organized issue tracking"],
+    "suggestions": [
+      "Implement consistent response time guidelines",
+      "Add detailed response templates for common issues"
+    ]
+  },
+
+  "qualityIndicator": 85,
+  "integratedInsights": [
+    "Repository shows good technical maturity with consistent practices",
+    "Community engagement needs improvement in response times",
+    "Documentation and code quality are strengths"
+  ]
+}
+
+
+REPOSITORY CONTENT TO ANALYZE:
+
+README.md CONTENT:
+%s
+
+COMMIT MESSAGES (latest 20):
+%s
+
+        """, owner, repo, excellentReadmeStructure, excellentCommitExamples,
+           readmeContent.substring(0, Math.min(800, readmeContent.length())),
+           commitMessages.substring(0, Math.min(600, commitMessages.length())));
+    }
+
+    /**
+     * 🚀 NEW: Parses the unified batch response containing all 3 analyses.
+     * Single JSON response instead of 3 separate parsing operations.
+     */
+    private BatchAnalysisResult parseBatchResponse(String batchResponse) {
+        try {
+            // Diagnostic logging for batch response
+            logger.debug("🔄 Batch LLM raw response (first 500 chars): {}",
+                batchResponse.substring(0, Math.min(500, batchResponse.length())));
+
+            JsonObject batchJson = gson.fromJson(batchResponse, JsonObject.class);
+
+            // Extract and validate each analysis section
+            JsonObject readmeJson = batchJson.getAsJsonObject("readme");
+            JsonObject commitsJson = batchJson.getAsJsonObject("commits");
+            JsonObject communityJson = batchJson.getAsJsonObject("community");
+
+            if (readmeJson == null || commitsJson == null || communityJson == null) {
+                throw new IllegalArgumentException("Batch response missing required analysis sections");
+            }
+
+            // Parse README analysis
+            LLMAnalysis.ReadmeAnalysis readmeAnalysis = parseBatchReadme(readmeJson);
+
+            // Parse commits analysis
+            LLMAnalysis.CommitAnalysis commitAnalysis = parseBatchCommits(commitsJson);
+
+            // Parse community analysis
+            LLMAnalysis.CommunityAnalysis communityAnalysis = parseBatchCommunity(communityJson);
+
+            // Extract quality indicator (0-100 scale)
+            double qualityScore = batchJson.has("qualityIndicator") ?
+                batchJson.get("qualityIndicator").getAsDouble() : 75.0;
+
+            logger.debug("✅ Batch analysis parsed successfully: README={}/{}/{}, Commits={}/{}/{}, Community={}/{}/{}",
+                readmeAnalysis.getClarity(), readmeAnalysis.getCompleteness(), readmeAnalysis.getNewcomerFriendly(),
+                commitAnalysis.getClarity(), commitAnalysis.getConsistency(), commitAnalysis.getInformativeness(),
+                communityAnalysis.getResponsiveness(), communityAnalysis.getHelpfulness(), communityAnalysis.getTone());
+
+            return new BatchAnalysisResult(
+                    readmeAnalysis, commitAnalysis, communityAnalysis,
+                    1200, 0, 0, qualityScore);
+
+        } catch (Exception e) {
+            logger.warn("❌ Failed to parse batch response, falling back to individual calls: {}", e.getMessage());
+            throw new RuntimeException("Batch response parsing failed", e);
+        }
+    }
+
+    /**
+     * 🚀 NEW: Container for batch analysis results combining all three analyses.
+     */
+    private static class BatchAnalysisResult {
+        final LLMAnalysis.ReadmeAnalysis readmeAnalysis;
+        final LLMAnalysis.CommitAnalysis commitAnalysis;
+        final LLMAnalysis.CommunityAnalysis communityAnalysis;
+        int tokensUsed;
+        int apiErrors;
+        int parseErrors;
+        double qualityScore;
+
+        BatchAnalysisResult(LLMAnalysis.ReadmeAnalysis readme, LLMAnalysis.CommitAnalysis commit,
+                           LLMAnalysis.CommunityAnalysis community, int tokens, int apiErrors,
+                           int parseErrors, double qualityScore) {
+            this.readmeAnalysis = readme;
+            this.commitAnalysis = commit;
+            this.communityAnalysis = community;
+            this.tokensUsed = tokens;
+            this.apiErrors = apiErrors;
+            this.parseErrors = parseErrors;
+            this.qualityScore = qualityScore;
+        }
+    }
+
+    // Batch parsing helper methods
+    private LLMAnalysis.ReadmeAnalysis parseBatchReadme(JsonObject json) {
+        int clarity = json.get("clarity").getAsInt();
+        int completeness = json.get("completeness").getAsInt();
+        int newcomer = json.get("newcomerFriendly").getAsInt();
+
+        List<String> strengths = jsonArrayToList(json.getAsJsonArray("strengths"));
+        List<String> suggestions = jsonArrayToList(json.getAsJsonArray("suggestions"));
+
+        // Clean Windows encoding issues
+        strengths = strengths.stream()
+                .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                .collect(Collectors.toList());
+        suggestions = suggestions.stream()
+                .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                .collect(Collectors.toList());
+
+        return new LLMAnalysis.ReadmeAnalysis(clarity, completeness, newcomer, strengths, suggestions);
+    }
+
+    private LLMAnalysis.CommitAnalysis parseBatchCommits(JsonObject json) {
+        int clarity = json.get("clarity").getAsInt();
+        int consistency = json.get("consistency").getAsInt();
+        int informativeness = json.get("informativeness").getAsInt();
+
+        List<String> patterns = jsonArrayToList(json.getAsJsonArray("patterns"));
+        patterns = patterns.stream()
+                .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                .collect(Collectors.toList());
+
+        return new LLMAnalysis.CommitAnalysis(clarity, consistency, informativeness, patterns);
+    }
+
+    private LLMAnalysis.CommunityAnalysis parseBatchCommunity(JsonObject json) {
+        int responsiveness = json.get("responsiveness").getAsInt();
+        int helpfulness = json.get("helpfulness").getAsInt();
+        int tone = json.get("tone").getAsInt();
+
+        List<String> strengths = jsonArrayToList(json.getAsJsonArray("strengths"));
+        List<String> suggestions = jsonArrayToList(json.getAsJsonArray("suggestions"));
+
+        strengths = strengths.stream()
+                .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                .collect(Collectors.toList());
+        suggestions = suggestions.stream()
+                .map(com.kaicode.rmi.util.EncodingHelper::cleanTextForWindows)
+                .collect(Collectors.toList());
+
+        return new LLMAnalysis.CommunityAnalysis(responsiveness, helpfulness, tone, strengths, suggestions);
     }
 
     /**
