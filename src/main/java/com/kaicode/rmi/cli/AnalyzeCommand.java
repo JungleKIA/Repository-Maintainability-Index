@@ -158,6 +158,24 @@ public class AnalyzeCommand implements Callable<Integer> {
     private String llmModel = "openai/gpt-oss-20b:free";
 
     /**
+     * Quiet mode flag to suppress informational output.
+     * <p>
+     * Reduces CLI verbosity by hiding progress messages and analysis notifications.
+     * Only final results will be displayed, making output suitable for scripts and automation.
+     * Errors and warnings are still shown in quiet mode for debugging purposes.
+     *
+     * <p>
+     * Use cases:
+     * <ul>
+     *   <li>Script integration where only results matter</li>
+     *   <li>CI/CD pipelines with minimal log output</li>
+     *   <li>Automated processing workflows</li>
+     * </ul>
+     */
+    @Option(names = {"-q", "--quiet"}, description = "Suppress informational output, show only results (useful for scripting and automation)")
+    private boolean quiet = false;
+
+    /**
      * Command execution entry point coordinating complete repository analysis workflow.
      * <p>
      * This method orchestrates the entire analysis pipeline from argument validation
@@ -214,8 +232,10 @@ public class AnalyzeCommand implements Callable<Integer> {
             // Use LLM model from command line or environment variable
             String model = EnvironmentLoader.getEnv("OPENROUTER_MODEL", llmModel);
 
-            System.out.println("Analyzing repository: " + repository);
-            System.out.println("This may take a moment...\n");
+            if (!quiet) {
+                System.out.println("Analyzing repository: " + repository);
+                System.out.println("This may take a moment...\n");
+            }
 
             MaintainabilityReport report = service.analyze(owner, repo);
 
@@ -232,7 +252,9 @@ public class AnalyzeCommand implements Callable<Integer> {
                 com.kaicode.rmi.llm.LLMClient llmClient = new com.kaicode.rmi.llm.LLMClient(apiKey, model);
                 com.kaicode.rmi.llm.LLMAnalyzer llmAnalyzer = new com.kaicode.rmi.llm.LLMAnalyzer(llmClient);
 
-                System.out.println("Running LLM analysis...\n");
+                if (!quiet) {
+                    System.out.println("Running LLM analysis...\n");
+                }
                 com.kaicode.rmi.model.LLMAnalysis llmAnalysis = llmAnalyzer.analyze(client, owner, repo);
 
                 com.kaicode.rmi.util.LLMReportFormatter llmFormatter = new com.kaicode.rmi.util.LLMReportFormatter();
