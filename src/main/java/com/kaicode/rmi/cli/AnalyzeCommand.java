@@ -10,7 +10,13 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.Callable;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CLI command for comprehensive GitHub repository maintainability analysis.
@@ -225,10 +231,19 @@ public class AnalyzeCommand implements Callable<Integer> {
             String owner = parts[0];
             String repo = parts[1];
 
-            // Use token from command line or environment variable
-            String githubToken = token != null ? token : EnvironmentLoader.getEnv("GITHUB_TOKEN");
-            GitHubClient client = new GitHubClient(githubToken);
-            MaintainabilityService service = new MaintainabilityService(client);
+            // Configure logging level for quiet mode
+            Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+            Level originalLevel = rootLogger.getLevel();
+
+            if (quiet) {
+                rootLogger.setLevel(Level.ERROR);
+            }
+
+            try {
+                // Use token from command line or environment variable
+                String githubToken = token != null ? token : EnvironmentLoader.getEnv("GITHUB_TOKEN");
+                GitHubClient client = new GitHubClient(githubToken);
+                MaintainabilityService service = new MaintainabilityService(client);
 
             // Use LLM model from command line or environment variable
             String model = EnvironmentLoader.getEnv("OPENROUTER_MODEL", llmModel);
@@ -273,12 +288,18 @@ public class AnalyzeCommand implements Callable<Integer> {
                     // Output is already UTF-8 encoded by System.out (configured in Main)
                     System.out.println(output);
                 }
-            } else {
-                // In quiet mode, analysis runs but output is suppressed
-                // This allows scripts to check exit codes without visual clutter
-            }
+                } else {
+                    // In quiet mode, analysis runs but output is suppressed
+                    // This allows scripts to check exit codes without visual clutter
+                }
 
-            return 0;
+                return 0;
+            } finally {
+                // Restore original logging level
+                if (originalLevel != null) {
+                    rootLogger.setLevel(originalLevel);
+                }
+            }
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
