@@ -15,16 +15,9 @@ This repository contains comprehensive Javadoc documentation guides for Java dev
 - Full doclint compliance explanations
 - Best practices and common mistakes checklist
 
-#### 2. **JAVADOC_GUIDE_RU.md** (Russian, 2755 lines)
-- Complete, production-ready Javadoc guide in Russian
-- Identical structure and content to English version
-- **NEW: Comprehensive section on documenting getters and setters** (геттеры и сеттеры)
-- Full translation maintaining technical accuracy
-- All examples and checklists included
-
 ### LLM System Prompt References
 
-#### 3. **JAVADOC_REFERENCE_FOR_LLM.md** (English, 968 lines)
+#### 2. **JAVADOC_REFERENCE_FOR_LLM.md** (English, 968 lines)
 - **Compact reference guide optimized for LLM context**
 - Designed to be used as a system prompt for code generation
 - Quick-lookup format with critical rules and examples
@@ -32,19 +25,12 @@ This repository contains comprehensive Javadoc documentation guides for Java dev
 - All doclint requirements condensed
 - Perfect for AI-assisted Javadoc generation and correction
 
-#### 4. **JAVADOC_REFERENCE_FOR_LLM_RU.md** (Russian, 968 lines)
-- **Compact reference guide in Russian for LLM context**
-- Same structure as English LLM reference
-- **NEW: Added getters/setters section** (геттеры и сеттеры со всеми паттернами)
-- Optimized for Russian-speaking LLM applications
-- All critical information in condensed format
-
 ---
 
 ## 🎯 When to Use Each Guide
 
 ### For Human Developers
-Use **JAVADOC_GUIDE_EN.md** or **JAVADOC_GUIDE_RU.md**:
+Use **JAVADOC_GUIDE_EN.md**:
 - Learning Javadoc best practices
 - Reference during code reviews
 - Team onboarding and training
@@ -52,7 +38,7 @@ Use **JAVADOC_GUIDE_EN.md** or **JAVADOC_GUIDE_RU.md**:
 - Understanding the "why" behind rules
 
 ### For LLM Integration
-Use **JAVADOC_REFERENCE_FOR_LLM.md** or **JAVADOC_REFERENCE_FOR_LLM_RU.md**:
+Use **JAVADOC_REFERENCE_FOR_LLM.md**:
 - System prompt for AI code generators
 - Context for automated Javadoc generation
 - Quick reference for code completion tools
@@ -97,9 +83,6 @@ Use **JAVADOC_REFERENCE_FOR_LLM.md** or **JAVADOC_REFERENCE_FOR_LLM_RU.md**:
 ```bash
 # English
 cat JAVADOC_GUIDE_EN.md
-
-# Russian
-cat JAVADOC_GUIDE_RU.md
 ```
 
 #### Step 2: Validate Your Code
@@ -180,7 +163,7 @@ Generate Javadoc for the following code:
  * @since 1.0
  */
 public class AuthService {
-    
+
     /**
      * Authenticates a user with credentials.
      *
@@ -228,7 +211,7 @@ public record UserProfile(String id, String name) {
 public class User {
     private String email;
     private UserStatus status;
-    
+
     /**
      * Returns the user's email address.
      * <p>
@@ -239,7 +222,7 @@ public class User {
     public String getEmail() {
         return email;
     }
-    
+
     /**
      * Sets the user's email address.
      * <p>
@@ -254,7 +237,7 @@ public class User {
         }
         this.email = email;
     }
-    
+
     /**
      * Checks if the user account is active.
      *
@@ -297,6 +280,6 @@ For questions about Javadoc best practices or these guides, refer to:
 
 ---
 
-**Last Updated:** 2024  
-**Version:** 1.0  
+**Last Updated:** 2024
+**Version:** 1.0
 **Status:** Production Ready ✅
