@@ -284,10 +284,6 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-<<<<<<< HEAD
-            type=sha,prefix={{branch}}-,enable=${{ is_default_branch }},enable=${{ is_default_branch }}
-=======
->>>>>>> 22cf269624286a42cd0789199bf2f0e426cb85e0
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
@@ -299,7 +295,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
 
       - name: Run Trivy vulnerability scanner on image
         uses: aquasecurity/trivy-action@master
