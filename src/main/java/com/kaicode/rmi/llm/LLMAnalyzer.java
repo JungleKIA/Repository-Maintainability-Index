@@ -117,18 +117,12 @@ public class LLMAnalyzer {
 
         LLMAnalysis.CommunityAnalysis communityAnalysis = analyzeCommunity(owner, repo, apiErrors, parseErrors, totalTokens);
 
-        // More accurate mode detection: if we used real tokens, it's REAL analysis
-        // Even with parsing issues, if LLM API was called and tokens consumed, it's real
-        boolean hasApiFailures = (apiErrors.get() + parseErrors.get()) >= 1;
-        boolean hasMultipleFallbacks = (readmeAnalysis.getClarity() <= 6 ||
-                                       commitAnalysis.getClarity() <= 6 ||
-                                       communityAnalysis.getResponsiveness() <= 3);
-
-        // If significant tokens were used via API, override fallback determination
-        if (totalTokens.get() >= 100 && !hasApiFailures) {
-            llmMode = "REAL"; // Definitely real if we consumed tokens without API failures
-        } else if (hasApiFailures || (parseErrors.get() >= 2 && hasMultipleFallbacks)) {
-            llmMode = "FALLBACK";
+        // Simple and robust: if any tokens were consumed, it's REAL analysis
+        // Parsing issues don't matter - API was actually used
+        if (totalTokens.get() > 0) {
+            llmMode = "REAL"; // Tokens consumed = API worked = REAL analysis
+        } else {
+            llmMode = "FALLBACK"; // No tokens = no API calls = fallback only
         }
 
         List<LLMAnalysis.AIRecommendation> recommendations = generateRecommendations(
