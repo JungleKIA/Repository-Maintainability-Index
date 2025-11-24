@@ -164,22 +164,23 @@ public class AnalyzeCommand implements Callable<Integer> {
     private String llmModel = "openai/gpt-oss-20b:free";
 
     /**
-     * Quiet mode flag to suppress all output except errors.
+     * Quiet mode flag to suppress progress logs but show analysis results.
      * <p>
-     * Completely suppresses stdout output including analysis results and progress messages.
-     * Only error messages are displayed on stderr for debugging purposes.
-     * Analysis still runs normally - this is useful for scripts that only need exit codes.
+     * Suppresses verbose SLF4J logging (INFO/WARN) output from analysis components,
+     * keeping only the final formatted report visible on stdout.
+     * Progress messages like "Analyzing repository..." are also hidden.
+     * Error messages are still displayed on stderr for debugging.
      *
      * <p>
      * Use cases:
      * <ul>
-     *   <li>Script integration where only exit code matters</li>
-     *   <li>CI/CD pipelines with silent operation</li>
-     *   <li>Automated processing without console clutter</li>
-     *   <li>Bulk operations where results are not needed immediately</li>
+     *   <li>Script integration that needs clean results without logs</li>
+     *   <li>CI/CD pipelines where log noise should be minimized</li>
+     *   <li>Automated processing with readable final output</li>
+     *   <li>Presentation of results without implementation details</li>
      * </ul>
      */
-    @Option(names = {"-q", "--quiet"}, description = "Suppress all output except errors (useful for scripting where only exit code matters)")
+    @Option(names = {"-q", "--quiet"}, description = "Suppress progress logs but show analysis results (useful for clean script output)")
     private boolean quiet = false;
 
     /**
@@ -263,35 +264,32 @@ public class AnalyzeCommand implements Callable<Integer> {
                 }
             }
 
-            if (!quiet) {
-                if (enableLLM && format.equalsIgnoreCase("text")) {
-                    String apiKey = EnvironmentLoader.getEnv("OPENROUTER_API_KEY");
-                    com.kaicode.rmi.llm.LLMClient llmClient = new com.kaicode.rmi.llm.LLMClient(apiKey, model);
-                    com.kaicode.rmi.llm.LLMAnalyzer llmAnalyzer = new com.kaicode.rmi.llm.LLMAnalyzer(llmClient);
+            if (enableLLM && format.equalsIgnoreCase("text")) {
+                String apiKey = EnvironmentLoader.getEnv("OPENROUTER_API_KEY");
+                com.kaicode.rmi.llm.LLMClient llmClient = new com.kaicode.rmi.llm.LLMClient(apiKey, model);
+                com.kaicode.rmi.llm.LLMAnalyzer llmAnalyzer = new com.kaicode.rmi.llm.LLMAnalyzer(llmClient);
 
+                if (!quiet) {
                     System.out.println("Running LLM analysis...\n");
-                    com.kaicode.rmi.model.LLMAnalysis llmAnalysis = llmAnalyzer.analyze(client, owner, repo);
-
-                    com.kaicode.rmi.util.LLMReportFormatter llmFormatter = new com.kaicode.rmi.util.LLMReportFormatter();
-                    String output = llmFormatter.formatWithLLM(report, llmAnalysis);
-
-                    // Output is already UTF-8 encoded by System.out (configured in Main)
-                    System.out.println(output);
-                } else {
-                    ReportFormatter formatter = new ReportFormatter();
-                    ReportFormatter.OutputFormat outputFormat = format.equalsIgnoreCase("json")
-                            ? ReportFormatter.OutputFormat.JSON
-                            : ReportFormatter.OutputFormat.TEXT;
-
-                    String output = formatter.format(report, outputFormat);
-
-                    // Output is already UTF-8 encoded by System.out (configured in Main)
-                    System.out.println(output);
                 }
-                } else {
-                    // In quiet mode, analysis runs but output is suppressed
-                    // This allows scripts to check exit codes without visual clutter
-                }
+                com.kaicode.rmi.model.LLMAnalysis llmAnalysis = llmAnalyzer.analyze(client, owner, repo);
+
+                com.kaicode.rmi.util.LLMReportFormatter llmFormatter = new com.kaicode.rmi.util.LLMReportFormatter();
+                String output = llmFormatter.formatWithLLM(report, llmAnalysis);
+
+                // Output is already UTF-8 encoded by System.out (configured in Main)
+                System.out.println(output);
+            } else {
+                ReportFormatter formatter = new ReportFormatter();
+                ReportFormatter.OutputFormat outputFormat = format.equalsIgnoreCase("json")
+                        ? ReportFormatter.OutputFormat.JSON
+                        : ReportFormatter.OutputFormat.TEXT;
+
+                String output = formatter.format(report, outputFormat);
+
+                // Output is already UTF-8 encoded by System.out (configured in Main)
+                System.out.println(output);
+            }
 
                 return 0;
             } finally {
