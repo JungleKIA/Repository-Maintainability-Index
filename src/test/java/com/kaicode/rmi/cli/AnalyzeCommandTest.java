@@ -65,4 +65,16 @@ class AnalyzeCommandTest {
         assertThat(cmd.getCommandSpec().optionsMap()).containsKey("-h");
         assertThat(cmd.getCommandSpec().optionsMap()).containsKey("--help");
     }
+
+    @Test
+    void shouldAcceptQuietOption() {
+        AnalyzeCommand command = new AnalyzeCommand();
+        CommandLine cmd = new CommandLine(command);
+
+        cmd.parseArgs("owner/repo", "--quiet");
+
+        assertThat(cmd.getParseResult()).isNotNull();
+        assertThat(cmd.getCommandSpec().optionsMap()).containsKey("-q");
+        assertThat(cmd.getCommandSpec().optionsMap()).containsKey("--quiet");
+    }
 }

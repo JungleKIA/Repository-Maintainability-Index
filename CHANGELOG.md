@@ -7,32 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - November 22, 2025
+
 ### Added
-- Comprehensive production documentation suite (8 new documents)
-  - Production Readiness Summary
-  - Production Audit Report
-  - Code Review Report
-  - Operations Runbook
-  - Deployment Guide
-  - API Specification
-  - Monitoring & Observability Setup Guide
-  - Documentation Index
-- CONTRIBUTING.md - Contribution guidelines
-- CODE_OF_CONDUCT.md - Community code of conduct
-- LICENSE - MIT License
-- This CHANGELOG.md
+- `--quiet` flag: Suppress informational output for scripting and automation
+- Automatic checksum generation (SHA-256, SHA-512) for JAR releases
 
-### Changed
-- Improved documentation organization and structure
-- Enhanced README with production deployment information
-
-### LLM Integration Enhancements
-- **Advanced Batch Processing**: Unified 3 LLM analyses into single API call, reducing API calls by 66%
-- **True Parallel Execution**: ParallelBatchProcessor for genuine async LLM operations with thread pool management
-- **Smart Content-Based Caching**: LLMCacheManager with SHA-256 hashing, TTL expiration, and LRU eviction
-- **Enhanced Confidence Scoring**: Weighted calculation system with quality-based score adjustments
-- **Robust Error Handling**: Comprehensive exception handling with automatic fallback mechanisms
-- **Performance Optimizations**: 95%+ cache hit rates expected for repeated analyses, combined with parallelism
+### Technical Improvements
+- Enhanced CLI test coverage with quiet flag validation
+- Updated CI/CD pipeline with automated checksum generation
 
 ## [1.0.0] - November 18, 2025
 

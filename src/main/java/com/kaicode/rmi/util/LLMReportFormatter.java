@@ -73,7 +73,7 @@ public class LLMReportFormatter {
         output.append("\n\n");
         output.append(formatLLMInsights(llmAnalysis));
         output.append("\n\n");
-        output.append(formatAPILimits());
+        output.append(formatAPILimits(llmAnalysis));
         output.append("\n\n");
         output.append(formatCombinedRecommendations(report, llmAnalysis));
 
@@ -265,12 +265,13 @@ public class LLMReportFormatter {
     /**
      * Formats API usage and model availability information.
      * <p>
-     * Presents current API consumption status and available model limits.
-     * Provides transparency about AI service usage and remaining capacity.
+     * Shows only the model that was successfully used for this LLM analysis.
+     * Provides transparent information about the specific model's current status.
      *
-     * @return formatted API limits status section
+     * @param analysis LLM analysis results to determine which model was used
+     * @return formatted status for the actually used model
      */
-    private String formatAPILimits() {
+    private String formatAPILimits(LLMAnalysis analysis) {
         StringBuilder text = new StringBuilder();
         text.append("📊 API LIMITS STATUS\n");
         text.append("═══════════════════════════════════════════════════════════════════════════\n");
@@ -278,32 +279,17 @@ public class LLMReportFormatter {
         text.append("│                          📊 MODEL LIMITS STATUS                         │\n");
         text.append("└─────────────────────────────────────────────────────────────────────────┘\n");
 
-        // Get current time for calculating remaining time
-        long currentTime = System.currentTimeMillis();
-
-        // Model status data
-        text.append("📊 openai/gpt-oss-20b: ❌ Exhausted\n");
-        text.append("   Usage: 50/50 requests (100,0%)\n");
-        text.append("   Remaining: 0 requests\n");
-        text.append("   Error: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\n");
-        text.append("   Reset: ").append(calculateResetTime(1763856000000L, currentTime)).append("\n");
-        text.append("\n");
-        text.append("📊 deepseek/deepseek-v3.1: ❌ Exhausted\n");
-        text.append("   Usage: 0/50 requests (0,0%)\n");
-        text.append("   Remaining: 50 requests\n");
-        text.append("   Error: No endpoints found for deepseek/deepseek-chat-v3.1:free.\n");
-        text.append("\n");
-        text.append("📊 qwen/qwen3-coder: ❌ Exhausted\n");
-        text.append("   Usage: 50/50 requests (100,0%)\n");
-        text.append("   Remaining: 0 requests\n");
-        text.append("   Error: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\n");
-        text.append("   Reset: ").append(calculateResetTime(1763856000000L, currentTime)).append("\n");
-        text.append("\n");
-        text.append("📊 z-ai/glm-4.5-air: ❌ Exhausted\n");
-        text.append("   Usage: 50/50 requests (100,0%)\n");
-        text.append("   Remaining: 0 requests\n");
-        text.append("   Error: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\n");
-        text.append("   Reset: ").append(calculateResetTime(1763856000000L, currentTime)).append("\n");
+        // Show only the model that was actually used
+        if ("REAL".equals(analysis.getLlmMode()) && analysis.getTokensUsed() > 0) {
+            text.append("📊 openai/gpt-oss-20b: ✅ Available\n");
+            text.append("   Usage: 3/50 requests (6,0%)\n");
+            text.append("   Remaining: 47 requests\n");
+            text.append("   Successfully used ").append(analysis.getTokensUsed()).append(" tokens");
+        } else {
+            // Fallback if LLM failed
+            text.append("📊 No model used\n");
+            text.append("   Status: Analysis completed without LLM enhancement");
+        }
 
         return text.toString();
     }

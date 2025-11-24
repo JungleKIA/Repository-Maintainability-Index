@@ -42,6 +42,13 @@ rmi analyze owner/repo
 rmi analyze owner/repo --llm
 ```
 
+### Quiet mode (for scripts)
+
+```bash
+# Suppress logs, show only results
+rmi analyze owner/repo --quiet --llm
+```
+
 ### With GitHub token
 
 ```bash

@@ -10,7 +10,13 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.Callable;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CLI command for comprehensive GitHub repository maintainability analysis.
@@ -158,6 +164,26 @@ public class AnalyzeCommand implements Callable<Integer> {
     private String llmModel = "openai/gpt-oss-20b:free";
 
     /**
+     * Quiet mode flag to suppress progress logs but show analysis results.
+     * <p>
+     * Suppresses verbose SLF4J logging (INFO/WARN) output from analysis components,
+     * keeping only the final formatted report visible on stdout.
+     * Progress messages like "Analyzing repository..." are also hidden.
+     * Error messages are still displayed on stderr for debugging.
+     *
+     * <p>
+     * Use cases:
+     * <ul>
+     *   <li>Script integration that needs clean results without logs</li>
+     *   <li>CI/CD pipelines where log noise should be minimized</li>
+     *   <li>Automated processing with readable final output</li>
+     *   <li>Presentation of results without implementation details</li>
+     * </ul>
+     */
+    @Option(names = {"-q", "--quiet"}, description = "Suppress progress logs but show analysis results (useful for clean script output)")
+    private boolean quiet = false;
+
+    /**
      * Command execution entry point coordinating complete repository analysis workflow.
      * <p>
      * This method orchestrates the entire analysis pipeline from argument validation
@@ -206,16 +232,27 @@ public class AnalyzeCommand implements Callable<Integer> {
             String owner = parts[0];
             String repo = parts[1];
 
-            // Use token from command line or environment variable
-            String githubToken = token != null ? token : EnvironmentLoader.getEnv("GITHUB_TOKEN");
-            GitHubClient client = new GitHubClient(githubToken);
-            MaintainabilityService service = new MaintainabilityService(client);
+            // Configure logging level for quiet mode
+            Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+            Level originalLevel = rootLogger.getLevel();
+
+            if (quiet) {
+                rootLogger.setLevel(Level.ERROR);
+            }
+
+            try {
+                // Use token from command line or environment variable
+                String githubToken = token != null ? token : EnvironmentLoader.getEnv("GITHUB_TOKEN");
+                GitHubClient client = new GitHubClient(githubToken);
+                MaintainabilityService service = new MaintainabilityService(client);
 
             // Use LLM model from command line or environment variable
             String model = EnvironmentLoader.getEnv("OPENROUTER_MODEL", llmModel);
 
-            System.out.println("Analyzing repository: " + repository);
-            System.out.println("This may take a moment...\n");
+            if (!quiet) {
+                System.out.println("Analyzing repository: " + repository);
+                System.out.println("This may take a moment...\n");
+            }
 
             MaintainabilityReport report = service.analyze(owner, repo);
 
@@ -232,7 +269,9 @@ public class AnalyzeCommand implements Callable<Integer> {
                 com.kaicode.rmi.llm.LLMClient llmClient = new com.kaicode.rmi.llm.LLMClient(apiKey, model);
                 com.kaicode.rmi.llm.LLMAnalyzer llmAnalyzer = new com.kaicode.rmi.llm.LLMAnalyzer(llmClient);
 
-                System.out.println("Running LLM analysis...\n");
+                if (!quiet) {
+                    System.out.println("Running LLM analysis...\n");
+                }
                 com.kaicode.rmi.model.LLMAnalysis llmAnalysis = llmAnalyzer.analyze(client, owner, repo);
 
                 com.kaicode.rmi.util.LLMReportFormatter llmFormatter = new com.kaicode.rmi.util.LLMReportFormatter();
@@ -252,7 +291,13 @@ public class AnalyzeCommand implements Callable<Integer> {
                 System.out.println(output);
             }
 
-            return 0;
+                return 0;
+            } finally {
+                // Restore original logging level
+                if (originalLevel != null) {
+                    rootLogger.setLevel(originalLevel);
+                }
+            }
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
