@@ -20,6 +20,7 @@ The Repository Maintainability Index tool analyzes GitHub repositories and provi
 - **GitHub API Integration**: Fetches real-time data from GitHub
 - **Production-Ready**: 90%+ test coverage with best practices
 - **📚 Complete Documentation**: Full suite of documentation (CONTRIBUTING.md, CODE_OF_CONDUCT.md, LICENSE, CHANGELOG.md)
+- **🚀 Quiet Mode**: `--quiet` flag suppresses progress logs while showing analysis results (perfect for scripting)
 
 ## Metrics
 
@@ -327,6 +328,18 @@ java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar anal
 
 # Or use the script
 rmi.bat analyze owner/repo --llm --model openai/gpt-4
+```
+
+### Quiet Mode (Scripting)
+
+For automation and scripting, use `--quiet` to suppress progress logs while keeping analysis results:
+
+```bash
+# Quiet mode - only shows final analysis, no logs
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --quiet
+
+# With LLM analysis in quiet mode
+java -Dfile.encoding=UTF-8 -jar target/repo-maintainability-index-1.0.0.jar analyze owner/repo --llm --quiet
 ```
 
 ### JSON Output
