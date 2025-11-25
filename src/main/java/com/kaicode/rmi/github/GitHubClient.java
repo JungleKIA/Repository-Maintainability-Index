@@ -466,6 +466,49 @@ public class GitHubClient {
     }
 
     /**
+     * Retrieves the README content from a repository.
+     * <p>
+     * Fetches the actual README file content from the repository using the GitHub API.
+     * The API returns the content as base64-encoded, which is automatically decoded.
+     * This is used for LLM-based README quality analysis.
+     * <p>
+     * If the README file doesn't exist or cannot be accessed, returns null.
+     *
+     * @param owner GitHub username or organization name, must not be null or empty
+     * @param repo repository name, must not be null or empty
+     * @return README content as plain text, or null if README not found
+     * @throws NullPointerException if owner or repo parameters are null
+     * @throws IllegalArgumentException if owner or repo parameters are empty
+     * @since 1.0
+     */
+    public String getReadmeContent(String owner, String repo) {
+        try {
+            String url = String.format("%s/repos/%s/%s/readme", apiBaseUrl, owner, repo);
+            String responseBody = executeRequest(url);
+            
+            JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+            
+            // GitHub API returns README content as base64-encoded string
+            String encodedContent = json.get("content").getAsString();
+            
+            // Remove whitespace and newlines from base64 string
+            encodedContent = encodedContent.replaceAll("\\s+", "");
+            
+            // Decode base64 to get actual README content
+            byte[] decodedBytes = java.util.Base64.getDecoder().decode(encodedContent);
+            String readmeContent = new String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8);
+            
+            logger.debug("Successfully fetched README content for {}/{}, length: {} characters", 
+                owner, repo, readmeContent.length());
+            return readmeContent;
+            
+        } catch (Exception e) {
+            logger.warn("Failed to get README for {}/{}: {}", owner, repo, e.getMessage());
+            return null; // README not found or not accessible
+        }
+    }
+
+    /**
      * Gets the total number of branches in the repository.
      * <p>
      * Retrieves all branches from the repository by using paginated API call to

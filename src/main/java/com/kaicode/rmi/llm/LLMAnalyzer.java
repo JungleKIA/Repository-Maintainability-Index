@@ -146,18 +146,29 @@ public class LLMAnalyzer {
 
     private String fetchReadme(GitHubClient client, String owner, String repo) {
         try {
-            // Use repository description as a simple substitute for LLM analysis
-            // Since actual README fetching is not implemented yet
-            RepositoryInfo repoInfo = client.getRepository(owner, repo);
-            String content = repoInfo.getDescription();
-            if (content == null || content.trim().isEmpty()) {
-                // Provide minimal sample content if no description
-                content = "This is a software repository containing source code, documentation, and related files.";
+            // Fetch actual README content from GitHub API
+            String readmeContent = client.getReadmeContent(owner, repo);
+            
+            if (readmeContent != null && !readmeContent.trim().isEmpty()) {
+                logger.debug("Successfully fetched README content for {}/{}, length: {} characters", 
+                    owner, repo, readmeContent.length());
+                return readmeContent;
             }
-            return content;
+            
+            // Fallback to repository description if README not found
+            logger.warn("README not found for {}/{}, falling back to repository description", owner, repo);
+            RepositoryInfo repoInfo = client.getRepository(owner, repo);
+            String description = repoInfo.getDescription();
+            
+            if (description != null && !description.isEmpty()) {
+                return "Repository Description: " + description + "\n\nNote: No README.md file found in this repository.";
+            }
+            
+            return "No README.md file found in this repository. Consider adding comprehensive documentation.";
+            
         } catch (Exception e) {
-            logger.warn("Could not fetch repository info for README analysis: {}", e.getMessage());
-            return "Sample repository containing software development files and documentation.";
+            logger.warn("Could not fetch README for {}/{}: {}", owner, repo, e.getMessage());
+            return "Unable to fetch repository documentation. This may affect the analysis quality.";
         }
     }
 
@@ -306,20 +317,36 @@ public class LLMAnalyzer {
     }
 
     private String buildReadmePrompt(String readmeContent) {
+        // Increase limit to 4000 characters for better analysis
+        // Most README files are under 4KB, this should capture the essential content
+        int maxLength = Math.min(4000, readmeContent.length());
+        String truncatedContent = readmeContent.substring(0, maxLength);
+        
+        // Add truncation notice if content was cut off
+        if (readmeContent.length() > 4000) {
+            truncatedContent += "\n\n[Content truncated - README is longer than 4000 characters]";
+        }
+        
         return String.format("""
                 IMPORTANT: Respond ONLY with a valid JSON object. No markdown, no explanations, no additional text.
 
                 Analyze the following README and provide scores (1-10) for clarity, completeness, and newcomer friendliness.
-                Provide 2-3 strengths and 3-5 suggestions.
+                
+                Scoring criteria:
+                - Clarity (1-10): How easy is it to understand what the project does?
+                - Completeness (1-10): Does it have installation, usage, examples, contributing guidelines?
+                - Newcomer Friendly (1-10): Can a new developer easily get started?
+                
+                Provide 2-3 strengths and 3-5 actionable suggestions for improvement.
 
                 Your response MUST be ONLY a JSON object in this exact format:
-                {"clarity":7,"completeness":5,"newcomerFriendly":6,"strengths":["clear docs","good structure"],"suggestions":["add examples","improve install guide","add screenshots"]}
+                {"clarity":7,"completeness":5,"newcomerFriendly":6,"strengths":["clear project description","good structure"],"suggestions":["add installation examples","include usage screenshots","add troubleshooting section"]}
 
                 README content:
                 %s
 
                 IMPORTANT: Output ONLY the JSON object, nothing else.
-                """, readmeContent.substring(0, Math.min(1000, readmeContent.length())));
+                """, truncatedContent);
     }
 
     private String buildCommitPrompt(String commitMessages) {
