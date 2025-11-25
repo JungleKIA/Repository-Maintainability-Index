@@ -1,8 +1,8 @@
 # Repository Maintainability Index (RMI)
 
-A production-level command-line tool for automated evaluation of GitHub repository quality and maintainability.
+**Repository Maintainability Index (RMI)** is a command-line tool that automatically evaluates and scores GitHub repository quality across 6 key metrics: documentation, commit quality, activity, issue management, community engagement, and branch organization.
 
-## 🚀 Quick Start Guide (First 5 Minutes)
+## 🚀 Quick Start (Install in 2 Minutes)
 
 ### Quick Prerequisites Check
 ```bash
