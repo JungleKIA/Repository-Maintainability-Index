@@ -2,7 +2,62 @@
 
 A production-level command-line tool for automated evaluation of GitHub repository quality and maintainability.
 
-> **🚀 Quick Start**: New to RMI? Check out [QUICK_START.md](QUICK_START.md) for a fast setup guide!
+## 🚀 Quick Start Guide (First 5 Minutes)
+
+### Quick Prerequisites Check
+```bash
+# 1. Check Java version
+java -version
+
+# Should show Java 17 or higher
+# If not installed: https://adoptium.net/
+```
+
+### Installation
+```bash
+# Option 1: Maven (for developers)
+git clone https://github.com/JungleKIA/Repository-Maintainability-Index.git
+cd Repository-Maintainability-Index
+mvn clean package
+
+# Option 2: Direct JAR download (recommended for users)
+curl -L https://github.com/JungleKIA/Repository-Maintainability-Index/releases/download/v1.0.2/repo-maintainability-index-1.0.1.jar -o rmi.jar
+```
+
+### Your First Analysis
+```bash
+# Basic repository analysis
+java -jar target/repo-maintainability-index-1.0.1.jar analyze microsoft/vscode
+
+# AI-powered analysis (requires API key)
+OPENROUTER_API_KEY=your_api_key java -jar target/repo-maintainability-index-1.0.1.jar analyze microsoft/vscode --llm
+
+# JSON output for automation
+java -jar target/repo-maintainability-index-1.0.1.jar analyze microsoft/vscode --format json
+```
+
+### Example Output
+You should see something like:
+```
+═══════════════════════════════════════════════════════════════
+  Repository Maintainability Index Report
+═══════════════════════════════════════════════════════════════
+
+Repository: microsoft/vscode
+Overall Score: 94.20/100 [██████████████░ EXCELLENT]
+
+▪ Documentation: 100.00/100
+▪ Commit Quality: 90.00/100
+▪ Activity: 98.00/100
+▪ Community: 95.00/100
+▪ Issue Management: 88.00/100
+```
+
+**Need help?** See [QUICK_START.md](QUICK_START.md) for detailed setup or the full documentation below.
+
+---
+
+> **🚀 Quick Start**: New to RMI? Check out [QUICK_START.md](QUICK_START.md) for a complete step-by-step guide!
 
 > **📊 Self-Analysis**: This repository practices what it preaches! Check [docs/REPOSITORY_IMPROVEMENT_SUMMARY.md](docs/REPOSITORY_IMPROVEMENT_SUMMARY.md) to see how we improved our own score from 53.45/100 to 69.45/100+ by following our tool's recommendations.
 
