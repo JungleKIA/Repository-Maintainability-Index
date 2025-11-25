@@ -10,13 +10,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 🧠 SMART CACHE MANAGER - интеллектуальное кеширование LLM результатов
+ * 🧠 SMART CACHE MANAGER - Intelligent LLM result caching
  *
- * Улучшает производительность и снижает costs за счет умного кеширования.
- * Функции:
- * - Content-based hashing для уникальной идентификации
- * - TTL-based expiration для актуальности данных
- * - LRU eviction для memory optimization
+ * Improves performance and reduces costs through smart caching mechanisms.
+ * Features:
+ * - Content-based hashing for unique identification
+ * - TTL-based expiration for data freshness
+ * - LRU eviction for memory optimization
  * - Repository-specific cache keys
  * - Hit/miss ratio statistics
  */
@@ -38,7 +38,7 @@ public class LLMCacheManager {
     private long misses = 0;
 
     /**
-     * Cache entry с metadata для управления.
+     * Cache entry with metadata for management.
      */
     private static class CacheEntry {
         final LLMClient.LLMResponse response;
@@ -61,11 +61,11 @@ public class LLMCacheManager {
     }
 
     /**
-     * Создает smart cache manager с оптимизированной конфигурацией.
+     * Creates smart cache manager with optimized configuration.
      *
-     * @param ttlHours время жизни cache (default: 24 hours)
-     * @param maxEntriesPerRepository максимум entries per репозиторий (default: 50)
-     * @param maxTotalEntries максимум всего entries (default: 1000)
+     * @param ttlHours time to live for cache (default: 24 hours)
+     * @param maxEntriesPerRepository maximum entries per repository (default: 50)
+     * @param maxTotalEntries maximum total entries (default: 1000)
      */
     public LLMCacheManager(int ttlHours, int maxEntriesPerRepository, int maxTotalEntries) {
         this.ttlMillis = ttlHours * 60 * 60 * 1000L; // Convert to milliseconds
@@ -81,19 +81,19 @@ public class LLMCacheManager {
     }
 
     /**
-     * Factory method с default конфигурацией.
+     * Factory method with default configuration.
      */
     public static LLMCacheManager createDefault() {
         return new LLMCacheManager(24, 50, 1000); // 24 hours, 50 per repo, 1000 total
     }
 
     /**
-     * Пытается получить cached результат для repository analysis.
+     * Attempts to get cached result for repository analysis.
      *
      * @param owner repository owner
      * @param repo repository name
      * @param contentHash hash of input content (README + commits)
-     * @return cached LLMResponse или null если нет в cache
+     * @return cached LLMResponse or null if not in cache
      */
     public LLMClient.LLMResponse get(String owner, String repo, String contentHash) {
         String key = generateCacheKey(owner, repo, contentHash);
@@ -117,12 +117,12 @@ public class LLMCacheManager {
     }
 
     /**
-     * Сохраняет результат в cache.
+     * Saves result to cache.
      *
      * @param owner repository owner
      * @param repo repository name
      * @param contentHash hash of input content
-     * @param response LLM response для кеширования
+     * @param response LLM response for caching
      */
     public void put(String owner, String repo, String contentHash, LLMClient.LLMResponse response) {
         if (response == null || response.getContent() == null) {
@@ -148,7 +148,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Проверяет содержится ли результат в cache.
+     * Checks if result is contained in cache.
      */
     public boolean contains(String owner, String repo, String contentHash) {
         String key = generateCacheKey(owner, repo, contentHash);
@@ -157,7 +157,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Очищает cache для конкретного репозитория.
+     * Clears cache for specific repository.
      */
     public void clearRepository(String owner, String repo) {
         String repoKey = generateRepoKey(owner, repo);
@@ -173,7 +173,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Полная очистка cache.
+     * Complete cache cleanup.
      */
     public void clearAll() {
         cache.clear();
@@ -184,7 +184,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Возвращает cache statistics.
+     * Returns cache statistics.
      */
     public CacheStats getStats() {
         long totalRequests = hits + misses;
@@ -203,7 +203,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Reset hit/miss статистики.
+     * Reset hit/miss statistics.
      */
     public void resetStats() {
         hits = 0;
@@ -211,7 +211,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Cleanup expired entries и enforce limits.
+     * Cleanup expired entries and enforce limits.
      */
     public void maintenance() {
         cleanupExpired();
@@ -317,8 +317,8 @@ public class LLMCacheManager {
     }
 
     /**
-     * Генерирует content hash для кеширования.
-     * Использует SHA-256 для consistency.
+     * Generates content hash for caching.
+     * Uses SHA-256 for consistency.
      */
     public static String generateContentHash(String content) {
         try {
@@ -332,7 +332,7 @@ public class LLMCacheManager {
     }
 
     /**
-     * Statistics container для cache analytics.
+     * Statistics container for cache analytics.
      */
     public static class CacheStats {
         public final int totalEntries;
