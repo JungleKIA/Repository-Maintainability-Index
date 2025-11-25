@@ -55,6 +55,78 @@ Overall Score: 94.20/100 [██████████████░ EXCELLEN
 
 **Need help?** See [QUICK_START.md](QUICK_START.md) for detailed setup or the full documentation below.
 
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help improve RMI:
+
+### Ways to Contribute
+- **📋 Report Issues** - Found a bug? Open an issue with detailed steps to reproduce
+- **💡 Suggest Features** - Have ideas for new metrics or improvements?
+- **🔧 Submit PRs** - Want to add features or fix bugs?
+- **📚 Improve Documentation** - Help make our docs clearer
+- **📝 Add Tests** - Increase our test coverage
+
+### Development Setup
+```bash
+# 1. Fork and clone the repository
+git clone https://github.com/your-username/Repository-Maintainability-Index.git
+cd Repository-Maintainability-Index
+
+# 2. Build the project
+mvn clean package
+
+# 3. Run tests
+mvn test
+
+# 4. Run analysis on test repo
+java -jar target/repo-maintainability-index-1.0.1.jar analyze picocli/picocli
+```
+
+### Pull Request Process
+1. Create a feature branch: `git checkout -b feature/your-feature-name`
+2. Make your changes with good commit messages
+3. Ensure all tests pass: `mvn test`
+4. Update documentation if needed
+5. Submit a pull request with a clear description
+
+### Code Standards
+- Java 17+ compatible
+- Comprehensive test coverage (90% target)
+- Document all public APIs
+- Follow existing code patterns
+
+### Testing Guidelines
+- Unit tests for all new functionality
+- Integration tests for API features
+- Test edge cases and error conditions
+- Verify LLM integration works correctly
+
+---
+
+## 📄 License
+
+**MIT License**
+
+Copyright (c) 2024 Repository Maintainability Index (Kaicode Festival)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 ---
 
 > **🚀 Quick Start**: New to RMI? Check out [QUICK_START.md](QUICK_START.md) for a complete step-by-step guide!
