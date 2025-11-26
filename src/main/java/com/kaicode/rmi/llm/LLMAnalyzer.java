@@ -116,7 +116,7 @@ public class LLMAnalyzer {
         AtomicInteger apiErrors = new AtomicInteger(0);    // Count API failures (429, network issues)
 
         String readmeContent = fetchReadme(githubClient, owner, repo);
-        LLMAnalysis.ReadmeAnalysis readmeAnalysis = analyzeReadme(readmeContent, apiErrors, parseErrors, totalTokens);
+        LLMAnalysis.ReadmeAnalysis readmeAnalysis = analyzeReadme(githubClient, owner, repo, readmeContent, apiErrors, parseErrors, totalTokens);
 
         List<CommitInfo> commits = githubClient.getRecentCommits(owner, repo, 30);
         LLMAnalysis.CommitAnalysis commitAnalysis = analyzeCommits(commits, apiErrors, parseErrors, totalTokens);
@@ -158,6 +158,52 @@ public class LLMAnalyzer {
      * @param repo repository name
      * @return README content or fallback message
      */
+    /**
+     * Builds comprehensive repository context information for LLM analysis.
+     * Checks for presence of all important project files and documentation.
+     */
+    /**
+     * Builds repository context for LLM analysis.
+     * Only checks essential documentation files that match the Documentation metric.
+     */
+    private String buildRepositoryContext(GitHubClient client, String owner, String repo) {
+        StringBuilder context = new StringBuilder();
+        context.append("REPOSITORY CONTEXT - Essential documentation files:\n");
+        
+        // Check only the 5 core documentation files from Documentation metric
+        boolean hasLicense = client.hasFile(owner, repo, "LICENSE") || 
+                           client.hasFile(owner, repo, "LICENSE.md") ||
+                           client.hasFile(owner, repo, "LICENSE.txt");
+        boolean hasContributing = client.hasFile(owner, repo, "CONTRIBUTING.md") ||
+                                client.hasFile(owner, repo, "CONTRIBUTING");
+        boolean hasCodeOfConduct = client.hasFile(owner, repo, "CODE_OF_CONDUCT.md");
+        boolean hasChangelog = client.hasFile(owner, repo, "CHANGELOG.md") ||
+                              client.hasFile(owner, repo, "CHANGELOG");
+        
+        // Build simple list
+        if (hasLicense) {
+            context.append("✓ LICENSE file exists\n");
+        }
+        if (hasContributing) {
+            context.append("✓ CONTRIBUTING.md exists\n");
+        }
+        if (hasCodeOfConduct) {
+            context.append("✓ CODE_OF_CONDUCT.md exists\n");
+        }
+        if (hasChangelog) {
+            context.append("✓ CHANGELOG.md exists\n");
+        }
+        
+        // Add note if no files found
+        if (!hasLicense && !hasContributing && !hasCodeOfConduct && !hasChangelog) {
+            context.append("⚠ No standard documentation files detected\n");
+        }
+        
+        context.append("\nIMPORTANT: Do NOT suggest adding files that are already present above!\n");
+        
+        return context.toString();
+    }
+
     private String fetchReadme(GitHubClient client, String owner, String repo) {
         try {
             String readmeContent = client.getReadmeContent(owner, repo);
@@ -213,7 +259,9 @@ public class LLMAnalyzer {
         return "Unable to fetch repository documentation. This may affect the analysis quality.";
     }
 
-    private LLMAnalysis.ReadmeAnalysis analyzeReadme(String readmeContent, AtomicInteger apiErrors, AtomicInteger parseErrors, AtomicInteger totalTokens) throws IOException {
+    private LLMAnalysis.ReadmeAnalysis analyzeReadme(GitHubClient githubClient, String owner, String repo, 
+                                                      String readmeContent, AtomicInteger apiErrors, 
+                                                      AtomicInteger parseErrors, AtomicInteger totalTokens) throws IOException {
         if (readmeContent == null || readmeContent.isEmpty()) {
             return new LLMAnalysis.ReadmeAnalysis(
                     3, 2, 2,
@@ -225,7 +273,9 @@ public class LLMAnalyzer {
         }
 
         try {
-            String prompt = buildReadmePrompt(readmeContent);
+            // Gather repository context for better analysis
+            String repoContext = buildRepositoryContext(githubClient, owner, repo);
+            String prompt = buildReadmePrompt(readmeContent, repoContext);
             LLMClient.LLMResponse response = llmClient.analyze(prompt);
             totalTokens.addAndGet(response.getTokensUsed()); // Add real tokens from API
             return parseReadmeAnalysis(response.getContent(), parseErrors);
@@ -361,9 +411,10 @@ public class LLMAnalyzer {
      * Builds LLM prompt for README analysis with smart content truncation.
      * 
      * @param readmeContent raw README content
+     * @param repoContext repository context with information about existing files
      * @return formatted prompt for LLM
      */
-    private String buildReadmePrompt(String readmeContent) {
+    private String buildReadmePrompt(String readmeContent, String repoContext) {
         String processedContent = prepareReadmeContent(readmeContent);
         
         return String.format("""
@@ -376,6 +427,12 @@ public class LLMAnalyzer {
                 - Completeness (1-10): Does it include installation steps, usage examples, API docs, contributing guidelines, and license?
                 - Newcomer Friendly (1-10): Can a developer unfamiliar with the project understand and start using it quickly?
                 
+                IMPORTANT CONTEXT - Repository files that already exist:
+                %s
+                
+                Do NOT suggest adding files that already exist (like LICENSE, CONTRIBUTING, etc.).
+                Focus suggestions on README content improvements, not on adding files that are already present.
+                
                 Provide 2-3 specific strengths and 3-5 actionable, concrete suggestions for improvement.
 
                 Expected JSON format (no markdown, no code blocks):
@@ -385,7 +442,7 @@ public class LLMAnalyzer {
                 %s
 
                 CRITICAL: Output ONLY the JSON object. No markdown formatting, no code blocks, no explanations.
-                """, processedContent);
+                """, repoContext, processedContent);
     }
     
     /**
