@@ -422,21 +422,41 @@ public class LLMAnalyzer {
 
                 Analyze the following README documentation and provide objective scores (1-10) for three key metrics.
                 
-                Scoring criteria:
-                - Clarity (1-10): How clearly does it explain what the project does and its purpose?
-                - Completeness (1-10): Does it include installation steps, usage examples, API docs, contributing guidelines, and license?
-                - Newcomer Friendly (1-10): Can a developer unfamiliar with the project understand and start using it quickly?
+                SCORING GUIDELINES (be fair and realistic):
                 
-                IMPORTANT CONTEXT - Repository files that already exist:
+                Clarity (1-10):
+                - 8-10: Clear project description, purpose, and value proposition with examples
+                - 6-7: Good description but could be clearer or more detailed
+                - 4-5: Basic description present but lacks clarity
+                - 1-3: Unclear or missing project description
+                
+                Completeness (1-10):
+                - 9-10: Has Quick Start, installation, usage examples, contributing section, license info, badges, and links to docs
+                - 7-8: Has most sections (installation, usage, contributing) but missing some details
+                - 5-6: Has basic installation and usage but missing contributing or examples
+                - 3-4: Only has minimal information
+                - 1-2: Very incomplete
+                
+                Newcomer Friendly (1-10):
+                - 9-10: Step-by-step Quick Start, clear prerequisites, multiple examples, troubleshooting
+                - 7-8: Good Quick Start with examples, easy to follow
+                - 5-6: Has basic instructions but could be clearer
+                - 3-4: Instructions present but confusing
+                - 1-2: Very hard for newcomers to understand
+                
+                REPOSITORY CONTEXT (files that already exist):
                 %s
                 
-                Do NOT suggest adding files that already exist (like LICENSE, CONTRIBUTING, etc.).
-                Focus suggestions on README content improvements, not on adding files that are already present.
+                CRITICAL RULES:
+                1. Do NOT suggest adding files that already exist (LICENSE, CONTRIBUTING, etc.)
+                2. If README mentions/links to existing files, give HIGHER completeness scores
+                3. Focus suggestions on README content improvements only
+                4. Be generous with scores if README is well-structured with examples
                 
-                Provide 2-3 specific strengths and 3-5 actionable, concrete suggestions for improvement.
+                Provide 2-3 specific strengths and 3-5 actionable suggestions for README content improvements.
 
                 Expected JSON format (no markdown, no code blocks):
-                {"clarity":7,"completeness":5,"newcomerFriendly":6,"strengths":["clear project description","well-organized sections"],"suggestions":["add installation examples with code snippets","include troubleshooting section","add API reference documentation"]}
+                {"clarity":8,"completeness":8,"newcomerFriendly":9,"strengths":["excellent quick start guide","comprehensive examples"],"suggestions":["add API reference section","include more code snippets","add troubleshooting FAQ"]}
 
                 README content:
                 %s
