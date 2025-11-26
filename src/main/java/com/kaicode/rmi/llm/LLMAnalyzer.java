@@ -56,7 +56,7 @@ public class LLMAnalyzer {
     private static final Logger logger = LoggerFactory.getLogger(LLMAnalyzer.class);
     
     // README analysis constants
-    private static final int MAX_README_LENGTH = 4000;
+    private static final int MAX_README_LENGTH = 8000; // Increased to capture more content including Contributing/License sections
     private static final int MIN_README_LENGTH = 50;
     private static final String README_TRUNCATION_NOTICE = "\n\n[Content truncated - README exceeds character limit]";
     
