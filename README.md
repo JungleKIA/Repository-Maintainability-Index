@@ -190,7 +190,7 @@ java -jar target/repo-maintainability-index-1.0.1.jar analyze picocli/picocli
 
 ## 📄 License
 
-**MIT License**
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 Copyright (c) 2024 Repository Maintainability Index (Kaicode Festival)
 
