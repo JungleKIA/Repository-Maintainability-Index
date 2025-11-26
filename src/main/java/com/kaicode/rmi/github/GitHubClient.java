@@ -482,11 +482,49 @@ public class GitHubClient {
      * @since 1.0
      */
     public String getReadmeContent(String owner, String repo) {
+        if (owner == null || owner.trim().isEmpty()) {
+            throw new IllegalArgumentException("Owner cannot be null or empty");
+        }
+        if (repo == null || repo.trim().isEmpty()) {
+            throw new IllegalArgumentException("Repository name cannot be null or empty");
+        }
+        
         try {
             String url = String.format("%s/repos/%s/%s/readme", apiBaseUrl, owner, repo);
             String responseBody = executeRequest(url);
             
+            return decodeReadmeContent(responseBody, owner, repo);
+            
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("404")) {
+                logger.info("README not found for {}/{}", owner, repo);
+            } else {
+                logger.warn("Failed to fetch README for {}/{}: {}", owner, repo, e.getMessage());
+            }
+            return null;
+        } catch (Exception e) {
+            logger.error("Unexpected error fetching README for {}/{}: {}", owner, repo, e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    /**
+     * Decodes base64-encoded README content from GitHub API response.
+     * 
+     * @param responseBody JSON response from GitHub API
+     * @param owner repository owner (for logging)
+     * @param repo repository name (for logging)
+     * @return decoded README content
+     * @throws IllegalStateException if content cannot be decoded
+     */
+    private String decodeReadmeContent(String responseBody, String owner, String repo) {
+        try {
             JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+            
+            if (!json.has("content") || json.get("content").isJsonNull()) {
+                logger.warn("README response for {}/{} missing content field", owner, repo);
+                return null;
+            }
             
             // GitHub API returns README content as base64-encoded string
             String encodedContent = json.get("content").getAsString();
@@ -498,13 +536,17 @@ public class GitHubClient {
             byte[] decodedBytes = java.util.Base64.getDecoder().decode(encodedContent);
             String readmeContent = new String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8);
             
-            logger.debug("Successfully fetched README content for {}/{}, length: {} characters", 
+            logger.debug("Successfully decoded README for {}/{}: {} characters", 
                 owner, repo, readmeContent.length());
+            
             return readmeContent;
             
+        } catch (IllegalArgumentException e) {
+            logger.error("Failed to decode base64 content for {}/{}: {}", owner, repo, e.getMessage());
+            throw new IllegalStateException("Invalid base64 encoding in README content", e);
         } catch (Exception e) {
-            logger.warn("Failed to get README for {}/{}: {}", owner, repo, e.getMessage());
-            return null; // README not found or not accessible
+            logger.error("Failed to parse README response for {}/{}: {}", owner, repo, e.getMessage());
+            throw new IllegalStateException("Failed to parse README content", e);
         }
     }
 

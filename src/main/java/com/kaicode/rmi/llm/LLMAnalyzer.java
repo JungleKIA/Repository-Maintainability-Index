@@ -54,6 +54,12 @@ import java.util.stream.Collectors;
  */
 public class LLMAnalyzer {
     private static final Logger logger = LoggerFactory.getLogger(LLMAnalyzer.class);
+    
+    // README analysis constants
+    private static final int MAX_README_LENGTH = 4000;
+    private static final int MIN_README_LENGTH = 50;
+    private static final String README_TRUNCATION_NOTICE = "\n\n[Content truncated - README exceeds character limit]";
+    
     private final LLMClient llmClient;
     private final Gson gson;
 
@@ -144,32 +150,67 @@ public class LLMAnalyzer {
                 .build();
     }
 
+    /**
+     * Fetches README content from GitHub repository with fallback strategies.
+     * 
+     * @param client GitHub API client
+     * @param owner repository owner
+     * @param repo repository name
+     * @return README content or fallback message
+     */
     private String fetchReadme(GitHubClient client, String owner, String repo) {
         try {
-            // Fetch actual README content from GitHub API
             String readmeContent = client.getReadmeContent(owner, repo);
             
-            if (readmeContent != null && !readmeContent.trim().isEmpty()) {
-                logger.debug("Successfully fetched README content for {}/{}, length: {} characters", 
+            if (isValidReadmeContent(readmeContent)) {
+                logger.info("Fetched README for {}/{}: {} characters", 
                     owner, repo, readmeContent.length());
                 return readmeContent;
             }
             
-            // Fallback to repository description if README not found
-            logger.warn("README not found for {}/{}, falling back to repository description", owner, repo);
+            // Fallback to repository description
+            return fetchFallbackContent(client, owner, repo);
+            
+        } catch (Exception e) {
+            logger.error("Failed to fetch README for {}/{}: {}", owner, repo, e.getMessage(), e);
+            return getFallbackMessage();
+        }
+    }
+    
+    /**
+     * Validates README content quality.
+     */
+    private boolean isValidReadmeContent(String content) {
+        return content != null 
+            && !content.trim().isEmpty() 
+            && content.length() >= MIN_README_LENGTH;
+    }
+    
+    /**
+     * Fetches fallback content when README is not available.
+     */
+    private String fetchFallbackContent(GitHubClient client, String owner, String repo) {
+        try {
+            logger.warn("README not found for {}/{}, using repository description", owner, repo);
             RepositoryInfo repoInfo = client.getRepository(owner, repo);
             String description = repoInfo.getDescription();
             
-            if (description != null && !description.isEmpty()) {
-                return "Repository Description: " + description + "\n\nNote: No README.md file found in this repository.";
+            if (description != null && !description.trim().isEmpty()) {
+                return String.format("Repository Description: %s%n%nNote: No README.md file found in this repository.", 
+                    description);
             }
-            
-            return "No README.md file found in this repository. Consider adding comprehensive documentation.";
-            
         } catch (Exception e) {
-            logger.warn("Could not fetch README for {}/{}: {}", owner, repo, e.getMessage());
-            return "Unable to fetch repository documentation. This may affect the analysis quality.";
+            logger.debug("Could not fetch repository description: {}", e.getMessage());
         }
+        
+        return "No README.md file found in this repository. Consider adding comprehensive documentation.";
+    }
+    
+    /**
+     * Returns fallback message when all fetch attempts fail.
+     */
+    private String getFallbackMessage() {
+        return "Unable to fetch repository documentation. This may affect the analysis quality.";
     }
 
     private LLMAnalysis.ReadmeAnalysis analyzeReadme(String readmeContent, AtomicInteger apiErrors, AtomicInteger parseErrors, AtomicInteger totalTokens) throws IOException {
@@ -316,37 +357,61 @@ public class LLMAnalyzer {
         return Math.min(95.0, (totalScores / 90.0) * 100 * 0.75 + 25);
     }
 
+    /**
+     * Builds LLM prompt for README analysis with smart content truncation.
+     * 
+     * @param readmeContent raw README content
+     * @return formatted prompt for LLM
+     */
     private String buildReadmePrompt(String readmeContent) {
-        // Increase limit to 4000 characters for better analysis
-        // Most README files are under 4KB, this should capture the essential content
-        int maxLength = Math.min(4000, readmeContent.length());
-        String truncatedContent = readmeContent.substring(0, maxLength);
-        
-        // Add truncation notice if content was cut off
-        if (readmeContent.length() > 4000) {
-            truncatedContent += "\n\n[Content truncated - README is longer than 4000 characters]";
-        }
+        String processedContent = prepareReadmeContent(readmeContent);
         
         return String.format("""
                 IMPORTANT: Respond ONLY with a valid JSON object. No markdown, no explanations, no additional text.
 
-                Analyze the following README and provide scores (1-10) for clarity, completeness, and newcomer friendliness.
+                Analyze the following README documentation and provide objective scores (1-10) for three key metrics.
                 
                 Scoring criteria:
-                - Clarity (1-10): How easy is it to understand what the project does?
-                - Completeness (1-10): Does it have installation, usage, examples, contributing guidelines?
-                - Newcomer Friendly (1-10): Can a new developer easily get started?
+                - Clarity (1-10): How clearly does it explain what the project does and its purpose?
+                - Completeness (1-10): Does it include installation steps, usage examples, API docs, contributing guidelines, and license?
+                - Newcomer Friendly (1-10): Can a developer unfamiliar with the project understand and start using it quickly?
                 
-                Provide 2-3 strengths and 3-5 actionable suggestions for improvement.
+                Provide 2-3 specific strengths and 3-5 actionable, concrete suggestions for improvement.
 
-                Your response MUST be ONLY a JSON object in this exact format:
-                {"clarity":7,"completeness":5,"newcomerFriendly":6,"strengths":["clear project description","good structure"],"suggestions":["add installation examples","include usage screenshots","add troubleshooting section"]}
+                Expected JSON format (no markdown, no code blocks):
+                {"clarity":7,"completeness":5,"newcomerFriendly":6,"strengths":["clear project description","well-organized sections"],"suggestions":["add installation examples with code snippets","include troubleshooting section","add API reference documentation"]}
 
                 README content:
                 %s
 
-                IMPORTANT: Output ONLY the JSON object, nothing else.
-                """, truncatedContent);
+                CRITICAL: Output ONLY the JSON object. No markdown formatting, no code blocks, no explanations.
+                """, processedContent);
+    }
+    
+    /**
+     * Prepares README content for LLM analysis with smart truncation.
+     * Prioritizes keeping important sections like title, description, and installation.
+     */
+    private String prepareReadmeContent(String content) {
+        if (content == null || content.isEmpty()) {
+            return "Empty README";
+        }
+        
+        // If content fits within limit, return as-is
+        if (content.length() <= MAX_README_LENGTH) {
+            return content;
+        }
+        
+        // Smart truncation: keep beginning (usually has important info)
+        String truncated = content.substring(0, MAX_README_LENGTH);
+        
+        // Try to cut at a natural boundary (paragraph or section)
+        int lastNewline = truncated.lastIndexOf("\n\n");
+        if (lastNewline > MAX_README_LENGTH / 2) {
+            truncated = truncated.substring(0, lastNewline);
+        }
+        
+        return truncated + README_TRUNCATION_NOTICE;
     }
 
     private String buildCommitPrompt(String commitMessages) {
