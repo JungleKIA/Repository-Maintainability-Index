@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Thu Nov 27 11:21:55 UTC 2025
+@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1764242515109
+https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact com.github.spotbugs\:spotbugs-maven-plugin\:pom\:4.8.2.0 from/to central (https\://repo.maven.apache.org/maven2)\: transfer failed for https\://repo.maven.apache.org/maven2/com/github/spotbugs/spotbugs-maven-plugin/4.8.2.0/spotbugs-maven-plugin-4.8.2.0.pom
