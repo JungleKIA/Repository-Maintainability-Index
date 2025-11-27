@@ -7,6 +7,8 @@
 [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue.svg)](https://adoptium.net/)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](docs/TESTING_VERIFICATION.md)
 
+📚 **[Contributing Guide](CONTRIBUTING.md)** • 📄 **[License](LICENSE)** • 🐛 **[Report Issues](https://github.com/JungleKIA/Repository-Maintainability-Index/issues)**
+
 ## 🎯 What is RMI?
 
 **Repository Maintainability Index (RMI)** is a command-line tool that analyzes GitHub repositories and gives them a quality score (0-100) based on 6 key metrics. Think of it as a "health check" for your repository.
@@ -118,6 +120,16 @@ java -jar rmi.jar analyze your-org/private-repo
 ```
 
 > 💡 **Tip**: See [QUICK_START.md](QUICK_START.md) for detailed setup guide with screenshots and troubleshooting.
+
+## ❓ Quick FAQ
+
+| Question | Answer |
+|----------|--------|
+| **Do I need a GitHub token?** | No for public repos. Yes for private repos or to avoid rate limits (60/hour → 5000/hour) |
+| **What Java version do I need?** | Java 17 or higher. Check with `java -version` |
+| **How do I get LLM analysis?** | Set `OPENROUTER_API_KEY` and add `--llm` flag. Get free key at [openrouter.ai](https://openrouter.ai/) |
+| **Can I use this in CI/CD?** | Yes! Use `--format json` for machine-readable output and `--quiet` to suppress logs |
+| **Is my data sent anywhere?** | Only to GitHub API (public data) and optionally to OpenRouter for LLM analysis. No tracking. |
 
 ## 💼 Use Cases
 
